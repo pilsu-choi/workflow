@@ -1,9 +1,9 @@
 from database.graph.edge import Edge
 from database.graph.vertex import Vertex
-from service.graph.edge_service import EdgeService
-from service.graph.vertex_service import VertexService
+from services.graph.edge_service import EdgeService
+from services.graph.vertex_service import VertexService
 from setting.logger import get_logger
-from repository.graph.graph_repository import GraphRepository
+from repositories.graph.graph_repository import GraphRepository
 from fastapi import Depends
 from database.graph.graph import Graph
 

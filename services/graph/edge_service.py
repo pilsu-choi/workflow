@@ -1,5 +1,5 @@
 from setting.logger import get_logger
-from repository.graph.edge_repository import EdgeRepository
+from repositories.graph.edge_repository import EdgeRepository
 from fastapi import Depends
 from database.graph.edge import Edge
 

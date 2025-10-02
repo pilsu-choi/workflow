@@ -1,6 +1,6 @@
 from database.graph.vertex import Vertex
 from setting.logger import get_logger
-from repository.graph.vertex_repository import VertexRepository
+from repositories.graph.vertex_repository import VertexRepository
 from fastapi import Depends
 
 logger = get_logger(__name__)
