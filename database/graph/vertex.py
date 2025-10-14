@@ -1,25 +1,14 @@
 from __future__ import annotations
-from datetime import datetime
-from typing import TYPE_CHECKING
-from sqlmodel import Field, Relationship, SQLModel
-
-if TYPE_CHECKING:
-    from .edge import Edge
+from datetime import datetime, timezone
+from sqlmodel import Field, SQLModel
+from sqlalchemy import JSON, DateTime
 
 
-class Vertex(SQLModel):
+class Vertex(SQLModel, table=True):
     __tablename__ = "vertices"
-    id: int = Field(default=None, primary_key=True)
+    id: int = Field(default=None, primary_key=True, sa_column_kwargs={"autoincrement": True})
+    graph_id: int = Field(foreign_key="graphs.id")
     type: str = Field(default=None)
-    properties: dict = Field(default_factory=dict)
-    created_at: datetime = Field(default=None)
-    updated_at: datetime = Field(default=None)
-
-    outgoing_edges: list["Edge"] = Relationship(
-        back_populates="source_vertex",
-        sa_relationship_kwargs={"foreign_keys": "[Edge.source_id]"},
-    )
-    incoming_edges: list["Edge"] = Relationship(
-        back_populates="target_vertex",
-        sa_relationship_kwargs={"foreign_keys": "[Edge.target_id]"},
-    )
+    properties: dict = Field(default_factory=dict, sa_type=JSON)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), sa_type=DateTime(timezone=True))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), sa_type=DateTime(timezone=True))
