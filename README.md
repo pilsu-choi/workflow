@@ -41,13 +41,33 @@ Langflow와 같은 워크플로우 기반 에이전트 생성 플랫폼입니다
 pip install -r requirements.txt
 ```
 
-### 2. 데이터베이스 설정
+### 2. Pre-commit 설정 (선택사항)
+코드 품질을 유지하기 위해 pre-commit 훅을 설정할 수 있습니다:
+
+```bash
+# pre-commit 설치
+uv add pre-commit
+
+# pre-commit 훅 설치
+pre-commit install
+
+# 모든 파일에 대해 pre-commit 실행 (선택사항)
+pre-commit run --all-files
+```
+
+설정된 pre-commit 훅들:
+- **Black**: Python 코드 포맷팅
+- **isort**: import 문 정렬
+- **Ruff**: 린팅 및 코드 품질 검사
+- **MyPy**: 타입 체킹
+
+### 3. 데이터베이스 설정
 PostgreSQL 데이터베이스를 설정하고 환경변수를 구성합니다:
 ```bash
 export DATABASE_URL="postgresql://username:password@localhost:5432/workflow_db"
 ```
 
-### 3. 애플리케이션 실행
+### 4. 애플리케이션 실행
 ```bash
 python main.py
 ```
