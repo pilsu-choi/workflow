@@ -7,7 +7,7 @@ logger = get_logger(__name__)
 
 
 class EdgeService:
-    def __init__(self, edge_repository: EdgeRepository = Depends(EdgeRepository)):
+    def __init__(self, edge_repository: EdgeRepository):
         self.edge_repository = edge_repository
 
     async def create_edge(self, edge: Edge):
@@ -24,3 +24,6 @@ class EdgeService:
 
     async def delete_edge(self, edge_id: int):
         return await self.edge_repository.delete_edge(edge_id)
+
+    async def get_edges_by_graph_id(self, graph_id: int):
+        return await self.edge_repository.get_edges_by_graph_id(graph_id)
