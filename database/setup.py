@@ -1,30 +1,47 @@
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlmodel import SQLModel
 
-engine_url = os.getenv(
-    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/workflow_scratch_2"
+from setting.logger import get_logger
+
+logger = get_logger(__name__)
+
+async_engine_url = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/workflow_scratch_2",
 )
-engine = create_engine(engine_url)
-AsyncEngine = create_async_engine(engine_url)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+AsyncEngine = create_async_engine(async_engine_url)
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-async def get_async_db():
+async def get_async_db() -> AsyncSession:
     async with AsyncSession(AsyncEngine) as session:
         try:
             yield session
+        except Exception as e:
+            logger.error(f"Database connection failed: {e}", exc_info=True)
+            raise e
         finally:
             await session.close()
+
+
+async def validate():
+    from pydantic_core import ValidationError
+
+    # db connection validation
+    try:
+        from sqlalchemy.ext.asyncio import create_async_engine
+
+        engine = create_async_engine(async_engine_url)
+        async with engine.connect() as conn:
+            await conn.close()
+    except Exception as e:
+        logger.error(f"Database validation failed: {e}", exc_info=True)
+        raise ValidationError(f"Database validation failed: {e}")
+
+    return True
+
+
+async def create_tables():
+    async with AsyncEngine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+    logger.info("✅ Tables created successfully")
