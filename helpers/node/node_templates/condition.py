@@ -1,10 +1,9 @@
 from typing import Any, Dict
-from helpers.node.node_base import (
-    BaseNode,
-    NodeInputOutput,
-    NodeInputOutputType,
-    NodeInputOutput,
-)
+
+from helpers.node.node_base import BaseNode, NodeInputOutput, NodeInputOutputType
+from setting.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class ConditionNode(BaseNode):
@@ -45,7 +44,8 @@ class ConditionNode(BaseNode):
         try:
             result = eval(condition.replace("value", f'"{value}"'))
             return {"true": result, "false": not result}
-        except:
+        except Exception as e:
+            logger.error(f"조건문 실행 실패: {e}", exc_info=True)
             return {"true": False, "false": True}
 
     def validate_inputs(self, inputs: Dict[str, Any]) -> bool:

@@ -1,10 +1,6 @@
 from typing import Any, Dict
-from helpers.node.node_base import (
-    BaseNode,
-    NodeInputOutput,
-    NodeInputOutputType,
-    NodeInputOutput,
-)
+
+from helpers.node.node_base import BaseNode, NodeInputOutput, NodeInputOutputType
 
 
 class FunctionNode(BaseNode):

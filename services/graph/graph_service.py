@@ -1,4 +1,5 @@
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from database.graph.graph import Graph
 from repositories.graph.graph_repository import GraphRepository
 from setting.logger import get_logger

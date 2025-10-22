@@ -1,6 +1,3 @@
-import asyncio
-import os
-import openai
 from openai import AsyncOpenAI
 
 # call_openai_model_code = """

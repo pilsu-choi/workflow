@@ -1,4 +1,5 @@
 from functools import lru_cache
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,5 +14,5 @@ class Settings(BaseSettings):
 
 
 @lru_cache
-async def get_config():
+def get_config():
     return Settings()

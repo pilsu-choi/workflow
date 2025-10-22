@@ -24,5 +24,28 @@ class WorkflowCreateRequest(BaseModel):
     edges: List[Dict[str, Any]]
 
 
+class WorkflowCreateResponse(BaseModel):
+    success: bool
+    graph_id: int
+    message: str
+
+
 class WorkflowExecuteRequest(BaseModel):
     initial_inputs: Dict[str, Any] | None = None
+
+
+class WorkflowExecuteResponse(BaseModel):
+    success: bool
+    result: Dict[str, Any]
+    errors: List[str]
+    execution_order: List[str]
+    execution_time: float
+    start_time: datetime
+    end_time: datetime
+
+
+class WorkflowGetResponses(BaseModel):
+    success: bool
+    graph: Dict[str, Any]
+    vertices: List[Dict[str, Any]]
+    edges: List[Dict[str, Any]]

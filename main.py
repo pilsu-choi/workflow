@@ -1,10 +1,12 @@
 import asyncio
 import os
-import uvicorn
 from contextlib import asynccontextmanager
+
+import uvicorn
 from fastapi import FastAPI
-from routers.v1.graph.workflow_router import router as workflow_router
+
 from database.setup import create_tables, validate
+from routers.v1.graph.workflow_router import router as workflow_router
 
 
 @asynccontextmanager
@@ -13,7 +15,7 @@ async def lifespan(app: FastAPI):
     await create_tables()
     yield
     # 서버 종료 시 정리 작업 (필요한 경우)
-    
+
 
 app = FastAPI(
     title="Workflow Agent Platform",

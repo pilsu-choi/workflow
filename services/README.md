@@ -33,8 +33,8 @@ async def update_graph(graph_id: int, graph: Graph) -> Graph
 async def delete_graph_metadata(graph_id: int) -> Dict[str, Any]
 
 # 워크플로우 작업은 위임
-async def save_workflow() -> persistence_service.save_workflow()
-async def execute_workflow() -> execution_service.execute_workflow()
+async def save() -> persistence_service.save()
+async def execute_workflow() -> execution_service.start()
 ```
 
 ### 2. WorkflowPersistenceService
@@ -44,9 +44,9 @@ async def execute_workflow() -> execution_service.execute_workflow()
 - 워크플로우 삭제 (완전 삭제)
 
 ```python
-async def save_workflow(graph, vertices, edges) -> Graph
-async def load_workflow(graph_id) -> Tuple[Graph, List[Vertex], List[Edge]]
-async def delete_workflow(graph_id) -> Dict[str, Any]
+async def save(graph, vertices, edges) -> Graph
+async def load(graph_id) -> Tuple[Graph, List[Vertex], List[Edge]]
+async def delete(graph_id) -> Dict[str, Any]
 ```
 
 ### 3. WorkflowExecutionService
@@ -145,16 +145,16 @@ vertices = [Vertex(type="TEXT_INPUT", properties={...})]
 edges = [Edge(source_id=1, target_id=2, type="default")]
 
 # 3. 워크플로우 저장 (WorkflowPersistenceService 직접 사용)
-saved_graph = await persistence_service.save_workflow(graph, vertices, edges)
+saved_graph = await persistence_service.save(graph, vertices, edges)
 ```
 
 ### 워크플로우 실행
 ```python
 # 1. 워크플로우 로드 (WorkflowPersistenceService 직접 사용)
-graph, vertices, edges = await persistence_service.load_workflow(graph_id)
+graph, vertices, edges = await persistence_service.load(graph_id)
 
 # 2. 워크플로우 실행 (WorkflowExecutionService 직접 사용)
-result = await execution_service.execute_workflow(graph_id, {"input": "test"})
+result = await execution_service.start(graph_id, {"input": "test"})
 ```
 
 ### Graph 메타데이터 관리
@@ -176,10 +176,10 @@ await graph_service.delete_graph_metadata(graph_id)
    - Graph 메타데이터: `GraphService` 직접 사용
 
 2. **라우터 엔드포인트 변경**:
-   - 워크플로우 생성: `persistence_service.save_workflow()`
-   - 워크플로우 조회: `persistence_service.load_workflow()`
-   - 워크플로우 실행: `execution_service.execute_workflow()`
-   - 워크플로우 삭제: `persistence_service.delete_workflow()`
+   - 워크플로우 생성: `persistence_service.save()`
+   - 워크플로우 조회: `persistence_service.load()`
+   - 워크플로우 실행: `execution_service.start()`
+   - 워크플로우 삭제: `persistence_service.delete()`
 
 3. **새로운 엔드포인트 활용**:
    - Graph 메타데이터만 필요한 경우: `/metadata` 엔드포인트 사용

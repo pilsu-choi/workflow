@@ -1,7 +1,6 @@
 from database.graph.vertex import Vertex
-from setting.logger import get_logger
 from repositories.graph.vertex_repository import VertexRepository
-from fastapi import Depends
+from setting.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -11,7 +10,6 @@ class VertexService:
         self.vertex_repository = vertex_repository
 
     async def create_vertex(self, vertex: Vertex):
-        # TODO: vertex 만들 때 properties에 실행해야 하는 코드 적재. 실행해야 하는 코드를 미리 정의해놓고 사용자한테는 변수만 받도록 ?
         return await self.vertex_repository.create_vertex(vertex)
 
     async def get_vertex(self, vertex_id: int):

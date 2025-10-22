@@ -1,10 +1,11 @@
-from typing import List, Dict, Any, Tuple
+from typing import Any, Dict, List, Tuple
+
+from database.graph.edge import Edge
 from database.graph.graph import Graph
 from database.graph.vertex import Vertex
-from database.graph.edge import Edge
-from services.graph.vertex_service import VertexService
-from services.graph.edge_service import EdgeService
 from repositories.graph.graph_repository import GraphRepository
+from services.graph.edge_service import EdgeService
+from services.graph.vertex_service import VertexService
 from setting.logger import get_logger
 
 logger = get_logger(__name__)
@@ -23,7 +24,7 @@ class WorkflowPersistenceService:
         self.vertex_service = vertex_service
         self.edge_service = edge_service
 
-    async def save_workflow(
+    async def save(
         self, graph: Graph, vertices: List[Vertex], edges: List[Edge]
     ) -> Graph:
         """워크플로우를 데이터베이스에 저장"""
@@ -50,9 +51,7 @@ class WorkflowPersistenceService:
             logger.error(f"워크플로우 저장 실패: {str(e)}", exc_info=True)
             raise
 
-    async def load_workflow(
-        self, graph_id: int
-    ) -> Tuple[Graph, List[Vertex], List[Edge]]:
+    async def load(self, graph_id: int) -> Tuple[Graph, List[Vertex], List[Edge]]:
         """데이터베이스에서 워크플로우 로드"""
         try:
             # 그래프 로드
@@ -66,14 +65,14 @@ class WorkflowPersistenceService:
             # 엣지들 로드
             edges = await self.edge_service.get_edges_by_graph_id(graph_id)
 
-            logger.info(f"워크플로우 로드 완료: {graph_id}")
+            logger.info(f"워크플로우 로드 완료. id: {graph_id}")
             return graph, vertices, edges
 
         except Exception as e:
             logger.error(f"워크플로우 로드 실패: {str(e)}", exc_info=True)
             raise
 
-    async def delete_workflow(self, graph_id: int) -> Dict[str, Any]:
+    async def delete(self, graph_id: int) -> Dict[str, Any]:
         """워크플로우 삭제 (Graph + Vertices + Edges)"""
         try:
             # 관련된 vertices와 edges도 함께 삭제

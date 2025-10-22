@@ -1,10 +1,9 @@
-from typing import Dict, List, Any, Set
-from collections import deque, defaultdict
+from collections import defaultdict, deque
 from datetime import datetime
+from typing import Any, Dict, List, Set
 
-from database.graph.vertex import Vertex
 from database.graph.edge import Edge
-from database.graph.graph import Graph
+from database.graph.vertex import Vertex
 from dto.workflow.workflow_dto import WorkflowExecutionResult
 from helpers.node.factory import NodeFactory
 from helpers.node.node_base import BaseNode, NodeType
@@ -23,7 +22,7 @@ class WorkflowEngine:
         self.reverse_dependencies: Dict[str, Set[str]] = defaultdict(set)
         self.is_first_execution: bool = True
 
-    async def load_workflow(self, vertices: List[Vertex], edges: List[Edge]) -> bool:
+    async def load(self, vertices: List[Vertex], edges: List[Edge]) -> bool:
         """데이터베이스에서 워크플로우 로드"""
         try:
             # 노드 인스턴스 생성
@@ -117,9 +116,11 @@ class WorkflowEngine:
 
             # 결과 저장
             node.set_result(result)
+
+            # 현재 노드의 output을 다음 노드의 input으로 사용하기 위한 result 세팅
             self.execution_context[node_id] = result
 
-            # TODO: 노드 체이닝 input/ouput 인터페이스 체크. 다음 노드의 input field 체크 및 parameter 맞춰주기.
+            # TODO: 노드 체이닝 input/ouput 인터페이스 체크. 다음 노드의 input field 체크 및 parameter 자동 매핑 위한 모듈 구현..?
             # 다음 노드의 input field를 맞춰줄 땐 조건 체크해야 함. 모든 노드의 조건 체크해아하나?
             if self.is_first_execution:
                 self.is_first_execution = False
@@ -133,7 +134,7 @@ class WorkflowEngine:
             node.set_error(error_msg)
             raise
 
-    async def execute_workflow(
+    async def start(
         self, initial_inputs: Dict[str, Any] | None = None
     ) -> WorkflowExecutionResult:
         """워크플로우 실행"""

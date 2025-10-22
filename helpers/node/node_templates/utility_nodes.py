@@ -1,13 +1,13 @@
-from typing import Dict, Any, List
-import time
 import json
-import requests
-from helpers.node.node_base import (
-    BaseNode,
-    NodeInputOutput,
-    NodeInputOutput,
-    NodeInputOutputType,
-)
+import time
+from typing import Any, Dict
+
+import requests  # type: ignore
+
+from helpers.node.node_base import BaseNode, NodeInputOutput, NodeInputOutputType
+from setting.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class DelayNode(BaseNode):
@@ -107,7 +107,8 @@ class WebhookNode(BaseNode):
 
             try:
                 response_data = response.json()
-            except:
+            except Exception as e:
+                logger.error(f"웹훅 응답 파싱 실패: {e}", exc_info=True)
                 response_data = response.text
 
             return {"response": response_data, "status_code": response.status_code}
@@ -118,75 +119,75 @@ class WebhookNode(BaseNode):
         return "url" in inputs and inputs["url"]
 
 
-class MergeNode(BaseNode):
-    """데이터 병합 노드"""
+# class MergeNode(BaseNode):
+#     """데이터 병합 노드"""
 
-    def __init__(self, node_id: str, properties: Dict[str, Any]):
-        super().__init__(node_id, properties)
-        self.inputs = [
-            NodeInputOutput(
-                name="input1",
-                type=NodeInputOutputType.JSON,
-                description="첫 번째 입력",
-                required=False,
-            ),
-            NodeInputOutput(
-                name="input2",
-                type=NodeInputOutputType.JSON,
-                description="두 번째 입력",
-                required=False,
-            ),
-            NodeInputOutput(
-                name="input3",
-                type=NodeInputOutputType.JSON,
-                description="세 번째 입력",
-                required=False,
-            ),
-            NodeInputOutput(
-                name="merge_strategy",
-                type=NodeInputOutputType.TEXT,
-                description="병합 전략",
-                value="merge",
-            ),
-        ]
-        self.outputs = [
-            NodeInputOutput(
-                name="merged_data",
-                type=NodeInputOutputType.JSON,
-                description="병합된 데이터",
-            )
-        ]
+#     def __init__(self, node_id: str, properties: Dict[str, Any]):
+#         super().__init__(node_id, properties)
+#         self.inputs = [
+#             NodeInputOutput(
+#                 name="input1",
+#                 type=NodeInputOutputType.JSON,
+#                 description="첫 번째 입력",
+#                 required=False,
+#             ),
+#             NodeInputOutput(
+#                 name="input2",
+#                 type=NodeInputOutputType.JSON,
+#                 description="두 번째 입력",
+#                 required=False,
+#             ),
+#             NodeInputOutput(
+#                 name="input3",
+#                 type=NodeInputOutputType.JSON,
+#                 description="세 번째 입력",
+#                 required=False,
+#             ),
+#             NodeInputOutput(
+#                 name="merge_strategy",
+#                 type=NodeInputOutputType.TEXT,
+#                 description="병합 전략",
+#                 value="merge",
+#             ),
+#         ]
+#         self.outputs = [
+#             NodeInputOutput(
+#                 name="merged_data",
+#                 type=NodeInputOutputType.JSON,
+#                 description="병합된 데이터",
+#             )
+#         ]
 
-    def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        merge_strategy = inputs.get("merge_strategy", "merge")
+#     def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+#         merge_strategy = inputs.get("merge_strategy", "merge")
 
-        # 모든 입력 수집
-        all_inputs = []
-        for key, value in inputs.items():
-            if key.startswith("input") and value is not None:
-                all_inputs.append(value)
+#         # 모든 입력 수집
+#         all_inputs = []
+#         for key, value in inputs.items():
+#             if key.startswith("input") and value is not None:
+#                 all_inputs.append(value)
 
-        if merge_strategy == "merge":
-            # 딕셔너리 병합
-            merged = {}
-            for input_data in all_inputs:
-                if isinstance(input_data, dict):
-                    merged.update(input_data)
-                else:
-                    merged[f"input_{len(merged)}"] = input_data
-        elif merge_strategy == "array":
-            # 배열로 병합
-            merged = all_inputs
-        elif merge_strategy == "concat":
-            # 문자열 연결
-            merged = " ".join(str(input_data) for input_data in all_inputs)
-        else:
-            merged = all_inputs
+#         if merge_strategy == "merge":
+#             # 딕셔너리 병합
+#             merged = {}
+#             for input_data in all_inputs:
+#                 if isinstance(input_data, dict):
+#                     merged.update(input_data)
+#                 else:
+#                     merged[f"input_{len(merged)}"] = input_data
+#         elif merge_strategy == "array":
+#             # 배열로 병합
+#             merged = all_inputs
+#         elif merge_strategy == "concat":
+#             # 문자열 연결
+#             merged = " ".join(str(input_data) for input_data in all_inputs)
+#         else:
+#             merged = all_inputs
 
-        return {"merged_data": merged}
+#         return {"merged_data": merged}
 
-    def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
-        return True  # 모든 입력이 선택사항
+#     def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
+#         return True  # 모든 입력이 선택사항
 
 
 class SplitNode(BaseNode):

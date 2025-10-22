@@ -1,27 +1,29 @@
-from fastapi import APIRouter, Depends, HTTPException
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
-from dto.workflow.workflow_dto import (
-    WorkflowCreateRequest,
-    WorkflowExecuteRequest,
-)
-from services.graph.graph_service import GraphService
-from services.workflow.workflow_persistence_service import WorkflowPersistenceService
-from services.workflow.workflow_execution_service import WorkflowExecutionService
-from helpers.utils.dependencies import (
-    get_graph_service,
-    get_workflow_persistence_service,
-    get_workflow_execution_service,
-)
+from fastapi import APIRouter, Depends, HTTPException
+
+from database.graph.edge import Edge
 from database.graph.graph import Graph
 from database.graph.vertex import Vertex
-from database.graph.edge import Edge
+from dto.workflow.workflow_dto import (
+    WorkflowCreateRequest,
+    WorkflowCreateResponse,
+    WorkflowExecuteRequest,
+)
 from helpers.node.node_base import NodeType
+from helpers.utils.dependencies import (
+    get_graph_service,
+    get_workflow_execution_service,
+    get_workflow_persistence_service,
+)
+from services.graph.graph_service import GraphService
+from services.workflow.workflow_execution_service import WorkflowExecutionService
+from services.workflow.workflow_persistence_service import WorkflowPersistenceService
 
 router = APIRouter(prefix="/workflows", tags=["workflows"])
 
 
-@router.post("/", response_model=Dict[str, Any])
+@router.post("/", response_model=WorkflowCreateResponse)
 async def create_workflow(
     request: WorkflowCreateRequest,
     persistence_service: WorkflowPersistenceService = Depends(
@@ -55,7 +57,7 @@ async def create_workflow(
             edges.append(edge)
 
         # 워크플로우 저장
-        saved_graph = await persistence_service.save_workflow(graph, vertices, edges)
+        saved_graph = await persistence_service.save(graph, vertices, edges)
 
         return {
             "success": True,
@@ -99,7 +101,7 @@ async def get_workflow(
 ):
     """특정 워크플로우 조회"""
     try:
-        graph, vertices, edges = await persistence_service.load_workflow(graph_id)
+        graph, vertices, edges = await persistence_service.load(graph_id)
 
         return {
             "graph": {
@@ -191,7 +193,7 @@ async def delete_workflow(
 ):
     """워크플로우 삭제"""
     try:
-        result = await persistence_service.delete_workflow(graph_id)
+        result = await persistence_service.delete(graph_id)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -260,3 +262,6 @@ async def get_node_status(
         return status
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# TODO: websocket 연결 엔드포인트 구성

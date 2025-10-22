@@ -1,14 +1,15 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from database.setup import get_async_db
+from repositories.graph.edge_repository import EdgeRepository
 from repositories.graph.graph_repository import GraphRepository
 from repositories.graph.vertex_repository import VertexRepository
-from repositories.graph.edge_repository import EdgeRepository
-from services.graph.vertex_service import VertexService
 from services.graph.edge_service import EdgeService
 from services.graph.graph_service import GraphService
-from services.workflow.workflow_persistence_service import WorkflowPersistenceService
+from services.graph.vertex_service import VertexService
 from services.workflow.workflow_execution_service import WorkflowExecutionService
+from services.workflow.workflow_persistence_service import WorkflowPersistenceService
 
 
 async def get_graph_repository(
