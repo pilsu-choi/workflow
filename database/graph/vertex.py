@@ -12,7 +12,7 @@ class Vertex(SQLModel, table=True):  # type: ignore
         default=None, primary_key=True, sa_column_kwargs={"autoincrement": True}
     )
     graph_id: int = Field(foreign_key="graphs.id")
-    type: str = Field(default=None)
+    type: str = Field(default=None, description="pre-defined Node type")
     properties: dict = Field(default_factory=dict, sa_type=JSON)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),

@@ -8,10 +8,14 @@ package "User Management" {
     class Authentication
 }
 
+package "Workflow Templates" {
+    class Templates
+}
+
 package "Workflow Builder" {
     class NodeLibrary
     class CanvasEditor
-    class WorkflowTemplates
+    ' class WorkflowTemplates
 }
 
 package "Execution Engine" {
@@ -34,8 +38,9 @@ package "Monitoring & Logging" {
 
 ' 관계 정의
 UserAccounts --> NodeLibrary
+NodeLibrary --> CanvasEditor
 RolesPermissions --> CanvasEditor
-WorkflowTemplates --> WorkflowRunner
+Templates --> CanvasEditor
 CanvasEditor --> WorkflowRunner
 WorkflowRunner --> APIConnectors
 WorkflowRunner --> Webhooks
