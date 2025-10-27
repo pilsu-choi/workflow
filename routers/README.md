@@ -1,1 +1,0 @@
-# http, https, websocket 등 외부 interface 통신 레이어
