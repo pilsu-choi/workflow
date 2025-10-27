@@ -1,0 +1,52 @@
+@startuml domain
+' Workflow 플랫폼 Application Domain Chart
+
+' 패키지 정의
+package "User Management" {
+    class UserAccounts
+    class RolesPermissions
+    class Authentication
+}
+
+package "Workflow Templates" {
+    class Templates
+}
+
+package "Workflow Builder" {
+    class NodeLibrary
+    class CanvasEditor
+    ' class WorkflowTemplates
+}
+
+package "Execution Engine" {
+    class WorkflowRunner
+    class Scheduler
+    class ErrorHandling
+}
+
+package "Integration" {
+    class APIConnectors
+    class Webhooks
+    class DatabaseConnectors
+}
+
+package "Monitoring & Logging" {
+    class ExecutionLogs
+    class AlertsNotifications
+    class MetricsDashboard
+}
+
+' 관계 정의
+UserAccounts --> NodeLibrary
+NodeLibrary --> CanvasEditor
+RolesPermissions --> CanvasEditor
+Templates --> CanvasEditor
+CanvasEditor --> WorkflowRunner
+WorkflowRunner --> APIConnectors
+WorkflowRunner --> Webhooks
+WorkflowRunner --> DatabaseConnectors
+WorkflowRunner --> ExecutionLogs
+WorkflowRunner --> AlertsNotifications
+Scheduler --> MetricsDashboard
+
+@enduml

@@ -1,0 +1,150 @@
+graph TB
+    %% 사용자 인터페이스 레이어
+    subgraph "Frontend Layer (React/TypeScript)"
+        UI[React UI Components]
+        FlowEditor[Flow Editor]
+        Playground[Playground]
+        Settings[Settings]
+        Files[File Management]
+        Knowledge[Knowledge Bases]
+    end
+
+    %% 프론트엔드 서비스
+    subgraph "Frontend Services"
+        State[Zustand State Management]
+        API[API Controllers]
+        WebSocket[WebSocket Client]
+        Router[React Router]
+    end
+
+    %% 백엔드 API 레이어
+    subgraph "Backend API Layer (FastAPI)"
+        subgraph "API v1"
+            ChatAPI[Chat API]
+            FlowAPI[Flows API]
+            FileAPI[Files API]
+            UserAPI[Users API]
+            AuthAPI[Auth API]
+            VoiceAPI[Voice Mode API]
+            MCPAPI[MCP API]m
+            MonitorAPI[Monitor API]
+        end
+        
+        subgraph "API v2"
+            FileAPIv2[Files API v2]
+            MCPAPIv2[MCP API v2]
+        end
+    end
+
+    %% 백엔드 서비스 레이어
+    subgraph "Backend Services"
+        subgraph "Core Services"
+            FlowService[Flow Service]
+            ChatService[Chat Service]
+            AuthService[Auth Service]
+            CacheService[Cache Service]
+            SocketService[Socket.IO Service]
+        end
+        
+        subgraph "AI Services"
+            ComponentService[Component Service]
+            ModelService[Model Service]
+            EmbeddingService[Embedding Service]
+            VectorStoreService[Vector Store Service]
+        end
+        
+        subgraph "External Integrations"
+            OpenAIService[OpenAI Integration]
+            ElevenLabsService[ElevenLabs Integration]
+            MCPService[MCP Integration]
+        end
+    end
+
+    %% 데이터 레이어
+    subgraph "Data Layer"
+        subgraph "Databases"
+            SQLite[(SQLite<br/>Development)]
+            PostgreSQL[(PostgreSQL<br/>Production)]
+        end
+        
+        subgraph "Cache & Storage"
+            Redis[(Redis Cache)]
+            FileStorage[File Storage]
+        end
+    end
+
+    %% 외부 서비스
+    subgraph "External Services"
+        OpenAI[OpenAI API]
+        ElevenLabs[ElevenLabs API]
+        VectorDB[Vector Databases]
+        LLMProviders[LLM Providers]
+    end
+
+    %% 통신 프로토콜
+    subgraph "Communication Protocols"
+        HTTP[HTTP/HTTPS]
+        WebSocket[WebSocket]
+        SSE[Server-Sent Events]
+        SocketIO[Socket.IO]
+    end
+
+    %% 연결 관계
+    UI --> State
+    State --> API
+    API --> HTTP
+    API --> WebSocket
+    
+    FlowEditor --> WebSocket
+    Playground --> WebSocket
+    
+    HTTP --> ChatAPI
+    HTTP --> FlowAPI
+    HTTP --> FileAPI
+    HTTP --> UserAPI
+    HTTP --> AuthAPI
+    HTTP --> VoiceAPI
+    HTTP --> MCPAPI
+    HTTP --> MonitorAPI
+    
+    WebSocket --> VoiceAPI
+    WebSocket --> SocketService
+    
+    ChatAPI --> ChatService
+    FlowAPI --> FlowService
+    FileAPI --> FileStorage
+    UserAPI --> AuthService
+    VoiceAPI --> OpenAIService
+    VoiceAPI --> ElevenLabsService
+    MCPAPI --> MCPService
+    
+    FlowService --> ComponentService
+    ChatService --> ModelService
+    ComponentService --> EmbeddingService
+    ComponentService --> VectorStoreService
+    
+    OpenAIService --> OpenAI
+    ElevenLabsService --> ElevenLabs
+    VectorStoreService --> VectorDB
+    ModelService --> LLMProviders
+    
+    FlowService --> SQLite
+    FlowService --> PostgreSQL
+    ChatService --> Redis
+    CacheService --> Redis
+    
+    SocketService --> SocketIO
+    VoiceAPI --> SSE
+
+    %% 스타일링
+    classDef frontend fill:#e1f5fe
+    classDef backend fill:#f3e5f5
+    classDef database fill:#e8f5e8
+    classDef external fill:#fff3e0
+    classDef protocol fill:#fce4ec
+
+    class UI,FlowEditor,Playground,Settings,Files,Knowledge,State,API,WebSocket,Router frontend
+    class ChatAPI,FlowAPI,FileAPI,UserAPI,AuthAPI,VoiceAPI,MCPAPI,MonitorAPI,FlowService,ChatService,AuthService,CacheService,SocketService,ComponentService,ModelService,EmbeddingService,VectorStoreService,OpenAIService,ElevenLabsService,MCPService backend
+    class SQLite,PostgreSQL,Redis,FileStorage database
+    class OpenAI,ElevenLabs,VectorDB,LLMProviders external
+    class HTTP,WebSocket,SSE,SocketIO protocol
