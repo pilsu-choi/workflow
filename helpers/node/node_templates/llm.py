@@ -1,6 +1,22 @@
+import os
 from typing import Any, Dict
 
+from dotenv import load_dotenv
+from openai import AsyncOpenAI
+
 from helpers.node.node_base import BaseNode, NodeInputOutput, NodeInputOutputType
+
+load_dotenv()
+
+
+# FIXME: 테스트용 llm 호출 코드
+async def call_openai_model(model: str, prompt: str, api_key: str) -> str | None:
+    client = AsyncOpenAI(api_key=api_key)
+    response = await client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response.choices[0].message.content
 
 
 class LLMNode(BaseNode):
@@ -18,7 +34,7 @@ class LLMNode(BaseNode):
                 name="model",
                 type=NodeInputOutputType.TEXT,
                 description="사용할 모델명",
-                value="gpt-3.5-turbo",
+                required=False,  # properties에서 가져올 수 있으므로 required=False
             ),
         ]
         self.outputs = [
@@ -29,17 +45,30 @@ class LLMNode(BaseNode):
             )
         ]
 
-    def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+
+        # input snapshot 저장
+        self.params = inputs
+
         # 실제 LLM 호출 로직은 여기에 구현
         # 현재는 모의 응답 반환
         prompt = inputs.get("prompt", "")
-        model = inputs.get("model", "gpt-3.5-turbo")
+        # model은 inputs나 properties에서 가져오기
+        model = inputs.get("model") or self.properties.get("model", "gpt-4.1")
+        api_key = os.getenv("OPENAI_API_KEY")
 
         # 모의 응답
-        response = f"LLM 응답 (모델: {model}): {prompt[:50]}..."
+        if api_key is None:
+            raise ValueError("OPENAI_API_KEY environment variable is not set")
+        response = await call_openai_model(model, prompt, api_key)
         inputs["response"] = response
-        return inputs
+        result = inputs.copy()
+        result["response"] = response
+        result["node_type"] = self.__class__.__name__
+        return result
 
     def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
-        # return "prompt" in inputs and inputs["prompt"]
-        return "text" in inputs and inputs["text"]
+        """
+        현재는 부모 클래스의 default method 이용하여 inputs 검증 진행. 필요시 override.
+        """
+        return super().validate_inputs(inputs)
