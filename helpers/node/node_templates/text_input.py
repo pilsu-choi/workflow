@@ -16,9 +16,12 @@ class TextInputNode(BaseNode):
             )
         ]
 
-    def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         text = inputs.get("text", "")
-        return {"text": text}
+        inputs["text"] = text
+        self.result = inputs
+        result = inputs.copy()
+        return result
 
     def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
         return True  # 입력 노드는 외부 입력을 받지 않음
