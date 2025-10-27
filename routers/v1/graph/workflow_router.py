@@ -36,25 +36,14 @@ async def create_workflow(
         graph = Graph(name=request.name, description=request.description)
 
         # 버텍스들 생성
-        vertices = []
+        vertices: list[Vertex] = []
         for vertex_data in request.vertices:
-            vertex = Vertex(
-                type=vertex_data.get("type", ""),
-                properties=vertex_data.get("properties", {}),
-                id=vertex_data.get("id", None),
-            )
-            vertices.append(vertex)
+            vertices.append(Vertex(**vertex_data))
 
         # 엣지들 생성
-        edges = []
+        edges: list[Edge] = []
         for edge_data in request.edges:
-            edge = Edge(
-                source_id=edge_data.get("source_id", 0),
-                target_id=edge_data.get("target_id", 0),
-                type=edge_data.get("type", "default"),
-                properties=edge_data.get("properties", {}),
-            )
-            edges.append(edge)
+            edges.append(Edge(**edge_data))
 
         # 워크플로우 저장
         saved_graph = await persistence_service.save(graph, vertices, edges)
