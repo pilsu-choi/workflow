@@ -7,6 +7,10 @@ from sqlmodel import Field, SQLModel
 
 
 class Vertex(SQLModel, table=True):  # type: ignore
+    """
+    한 개의 Vertex는 여러 개의 Node Port를 가질 수 있다.
+    """
+
     __tablename__ = "vertices"  # type: ignore
     id: int = Field(
         default=None, primary_key=True, sa_column_kwargs={"autoincrement": True}
