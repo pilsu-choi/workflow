@@ -3,6 +3,9 @@ from typing import Any, Dict, List
 
 from pydantic import BaseModel
 
+from database.graph.edge import Edge
+from database.graph.vertex import Vertex
+
 
 class WorkflowExecutionResult:
     """워크플로우 실행 결과"""
@@ -20,8 +23,8 @@ class WorkflowExecutionResult:
 class WorkflowCreateRequest(BaseModel):
     name: str
     description: str = ""
-    vertices: List[Dict[str, Any]]
-    edges: List[Dict[str, Any]]
+    vertices: List[Vertex]
+    edges: List[Edge]
 
 
 class WorkflowCreateResponse(BaseModel):
