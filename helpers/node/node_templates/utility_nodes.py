@@ -31,7 +31,7 @@ class DelayNode(BaseNode):
             )
         ]
 
-    def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         delay_seconds = inputs.get("delay_seconds", 1)
         time.sleep(delay_seconds)
         return {"output": f"지연 {delay_seconds}초 완료"}
@@ -82,7 +82,7 @@ class WebhookNode(BaseNode):
             ),
         ]
 
-    def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         url = inputs.get("url")
         method = inputs.get("method", "POST").upper()
         headers = inputs.get("headers", {})
@@ -222,7 +222,7 @@ class SplitNode(BaseNode):
             )
         ]
 
-    def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         data = inputs.get("data", "")
         separator = inputs.get("separator", ",")
         max_splits = inputs.get("max_splits")
@@ -258,11 +258,14 @@ class TextOutputNode(BaseNode):
             )
         ]
 
-    def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         text = inputs.get("text", "")
         # 실제 구현에서는 파일 저장, 로깅, API 응답 등으로 출력
         print("Text Output: ", text)
-        return {"output": text}
+        result = inputs.copy()
+        result["output"] = text
+        result["node_type"] = self.__class__.__name__
+        return result
 
     def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
         return "text" in inputs
@@ -288,7 +291,7 @@ class JSONOutputNode(BaseNode):
             )
         ]
 
-    def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         data = inputs.get("data", {})
         # 실제 구현에서는 파일 저장, 로깅, API 응답 등으로 출력
         print(f"JSON Output: {json.dumps(data, ensure_ascii=False, indent=2)}")
