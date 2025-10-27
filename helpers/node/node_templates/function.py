@@ -29,7 +29,9 @@ class FunctionNode(BaseNode):
             )
         ]
 
-    def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        self.params = inputs
+
         code = inputs.get("code", "")
         args = inputs.get("args", {})
 
@@ -43,4 +45,7 @@ class FunctionNode(BaseNode):
             raise Exception(f"코드 실행 오류: {str(e)}")
 
     def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
-        return "code" in inputs and inputs["code"]
+        """
+        현재는 부모 클래스의 default method 이용하여 inputs 검증 진행. 필요시 override.
+        """
+        return super().validate_inputs(inputs)
