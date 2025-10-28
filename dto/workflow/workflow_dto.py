@@ -3,8 +3,22 @@ from typing import Any, Dict, List
 
 from pydantic import BaseModel
 
-from database.graph.edge import Edge
-from database.graph.vertex import Vertex
+
+class VertexCreateRequest(BaseModel):
+    """Vertex 생성 요청 DTO"""
+
+    type: str
+    properties: Dict[str, Any] = {}
+
+
+class EdgeCreateRequest(BaseModel):
+    """Edge 생성 요청 DTO"""
+
+    source_id: int
+    target_id: int
+    type: str = "default"
+    source_properties: Dict[str, Any] = {}
+    target_properties: Dict[str, Any] = {}
 
 
 class WorkflowExecutionResult:
@@ -23,8 +37,8 @@ class WorkflowExecutionResult:
 class WorkflowCreateRequest(BaseModel):
     name: str
     description: str = ""
-    vertices: List[Vertex]
-    edges: List[Edge]
+    vertices: List[VertexCreateRequest] = []
+    edges: List[EdgeCreateRequest] = []
 
 
 class WorkflowCreateResponse(BaseModel):
@@ -52,3 +66,12 @@ class WorkflowGetResponses(BaseModel):
     graph: Dict[str, Any]
     vertices: List[Dict[str, Any]]
     edges: List[Dict[str, Any]]
+
+
+class WorkflowUpdateRequest(BaseModel):
+    """워크플로우 업데이트 요청 DTO"""
+
+    name: str | None = None
+    description: str | None = None
+    vertices: List[VertexCreateRequest] | None = None
+    edges: List[EdgeCreateRequest] | None = None

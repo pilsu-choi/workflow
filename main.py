@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from database.setup import create_tables, validate
 from routers.v1.graph.workflow_router import router as workflow_router
@@ -51,6 +52,18 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+# CORS 미들웨어 추가
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],  # React 개발 서버 (포트 5173과 5174 모두 허용)
+    allow_credentials=True,
+    allow_methods=["*"],  # 모든 HTTP 메서드 허용
+    allow_headers=["*"],  # 모든 헤더 허용
+)
+
 
 @app.get("/")
 def read_root():
@@ -62,7 +75,7 @@ def read_root():
 
 
 # 워크플로우 라우터 추가
-app.include_router(workflow_router)
+app.include_router(workflow_router, prefix="/api")
 
 if __name__ == "__main__":
 

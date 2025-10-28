@@ -9,6 +9,7 @@ from dto.workflow.workflow_dto import (
     WorkflowCreateRequest,
     WorkflowCreateResponse,
     WorkflowExecuteRequest,
+    WorkflowUpdateRequest,
 )
 from helpers.node.node_base import NodeType
 from helpers.utils.dependencies import (
@@ -20,7 +21,7 @@ from services.graph.graph_service import GraphService
 from services.workflow.workflow_execution_service import WorkflowExecutionService
 from services.workflow.workflow_persistence_service import WorkflowPersistenceService
 
-router = APIRouter(prefix="/workflows", tags=["workflows"])
+router = APIRouter(prefix="/v1/workflows", tags=["workflows"])
 
 
 @router.post("/", response_model=WorkflowCreateResponse)
@@ -38,12 +39,22 @@ async def create_workflow(
         # 버텍스들 생성
         vertices: list[Vertex] = []
         for vertex_data in request.vertices:
-            vertices.append(Vertex(**vertex_data))
+            vertices.append(
+                Vertex(type=vertex_data.type, properties=vertex_data.properties)
+            )
 
         # 엣지들 생성
         edges: list[Edge] = []
         for edge_data in request.edges:
-            edges.append(Edge(**edge_data))
+            edges.append(
+                Edge(
+                    source_id=edge_data.source_id,
+                    target_id=edge_data.target_id,
+                    type=edge_data.type,
+                    source_properties=edge_data.source_properties,
+                    target_properties=edge_data.target_properties,
+                )
+            )
 
         # 워크플로우 저장
         saved_graph = await persistence_service.save(graph, vertices, edges)
@@ -125,7 +136,8 @@ async def get_workflow(
                     "source_id": edge.source_id,
                     "target_id": edge.target_id,
                     "type": edge.type,
-                    "properties": edge.properties,
+                    "source_properties": edge.source_properties,
+                    "target_properties": edge.target_properties,
                     "created_at": (
                         edge.created_at.isoformat() if edge.created_at else None
                     ),
@@ -251,6 +263,70 @@ async def get_node_status(
         return status
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/{graph_id}", response_model=Dict[str, Any])
+async def update_workflow(
+    graph_id: int,
+    request: WorkflowUpdateRequest,
+    persistence_service: WorkflowPersistenceService = Depends(
+        get_workflow_persistence_service
+    ),
+):
+    """워크플로우 업데이트"""
+    try:
+        # 그래프 메타데이터 업데이트
+        graph_updates = {}
+        if request.name is not None:
+            graph_updates["name"] = request.name
+        if request.description is not None:
+            graph_updates["description"] = request.description
+
+        # 버텍스들 생성 (제공된 경우)
+        vertices = None
+        if request.vertices is not None:
+            vertices = []
+            for vertex_data in request.vertices:
+                vertices.append(
+                    Vertex(
+                        type=vertex_data.type,
+                        properties=vertex_data.properties,
+                    )
+                )
+
+        # 엣지들 생성 (제공된 경우)
+        edges = None
+        if request.edges is not None:
+            edges = []
+            for edge_data in request.edges:
+                edges.append(
+                    Edge(
+                        source_id=edge_data.source_id,
+                        target_id=edge_data.target_id,
+                        type=edge_data.type,
+                        source_properties=edge_data.source_properties,
+                        target_properties=edge_data.target_properties,
+                    )
+                )
+
+        # 워크플로우 업데이트
+        updated_graph = await persistence_service.update(
+            graph_id=graph_id,
+            graph_updates=graph_updates if graph_updates else None,
+            vertices=vertices,
+            edges=edges,
+        )
+
+        return {
+            "success": True,
+            "graph_id": updated_graph.id,
+            "message": "워크플로우가 성공적으로 업데이트되었습니다",
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # TODO: websocket 연결 엔드포인트 구성

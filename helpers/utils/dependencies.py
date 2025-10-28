@@ -46,12 +46,16 @@ async def get_workflow_persistence_service(
     graph_repository: GraphRepository = Depends(get_graph_repository),
     vertex_service: VertexService = Depends(get_vertex_service),
     edge_service: EdgeService = Depends(get_edge_service),
+    vertex_repository: VertexRepository = Depends(get_vertex_repository),
+    edge_repository: EdgeRepository = Depends(get_edge_repository),
 ) -> WorkflowPersistenceService:
     """워크플로우 영속성 서비스 의존성"""
     return WorkflowPersistenceService(
         graph_repository=graph_repository,
         vertex_service=vertex_service,
         edge_service=edge_service,
+        vertex_repository=vertex_repository,
+        edge_repository=edge_repository,
     )
 
 
