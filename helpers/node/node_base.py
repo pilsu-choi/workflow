@@ -1,10 +1,9 @@
 import enum
 import uuid
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Literal
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from database.graph.edge import Edge
@@ -31,6 +30,7 @@ class NodeType(enum.Enum):
     DELAY = "DELAY"
     MERGE = "MERGE"
     SPLIT = "SPLIT"
+    PARSER_NODE = "PARSER_NODE"
 
 
 class NodeInputOutputType(enum.Enum):
@@ -43,8 +43,7 @@ class NodeInputOutputType(enum.Enum):
     OBJECT = "OBJECT"
 
 
-@dataclass
-class NodeInputOutput:
+class NodeInputOutput(BaseModel):
     id: str = Field(
         default_factory=lambda: str(uuid.uuid4())[:8],
         description="Node의 input, output 포트 ID",

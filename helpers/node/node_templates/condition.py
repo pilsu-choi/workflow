@@ -39,26 +39,47 @@ class ConditionNode(BaseNode):
 
     async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         self.params = inputs
+        # operator는 properties에서, value는 inputs에서 가져오기
+        operator = self.properties.get("config", {}).get(
+            "operator", ""
+        )  # equal, not_equal, greater_than, less_than, greater_equal, less_equal
+        compare_value = self.properties.get("config", {}).get("compare_value", "")
 
-        # condition은 inputs나 properties에서 가져오기
-        condition = inputs.get("condition") or self.properties.get("condition", "")
-        value = inputs.get("value", "")
+        # inputs에서 실제 비교할 값 가져오기
+        input_value = inputs.get("value", "")
 
-        # 간단한 조건 평가 (실제로는 더 복잡한 파싱 필요)
+        # 간단한 조건 평가
         try:
-            if not condition:
-                # condition이 비어있으면 항상 True 반환
+            if not operator:
+                # operator가 비어있으면 항상 True 반환
                 logger.warning("조건식이 비어있습니다. True를 반환합니다.")
                 return {"true": True, "false": False}
 
-            # condition의 "value"를 실제 값으로 치환
-            # 예: "value == 'admin'" -> "user123 == 'admin'" (value가 "user123"인 경우)
-            # 또는 'value == 'admin'' -> 'admin == 'admin'' (value가 "admin"인 경우)
-            evaluated_condition = condition.replace("value", repr(value))
-            result = eval(evaluated_condition)
+            # operator에 따라 비교 수행
+            result = False
+            if operator == "equal" or operator == "==":
+                result = input_value == compare_value
+            elif operator == "not_equal" or operator == "!=":
+                result = input_value != compare_value
+            elif operator == "greater_than" or operator == ">":
+                result = float(input_value) > float(compare_value)
+            elif operator == "less_than" or operator == "<":
+                result = float(input_value) < float(compare_value)
+            elif operator == "greater_equal" or operator == ">=":
+                result = float(input_value) >= float(compare_value)
+            elif operator == "less_equal" or operator == "<=":
+                result = float(input_value) <= float(compare_value)
+            else:
+                logger.warning(f"알 수 없는 operator: {operator}, False를 반환합니다.")
+                result = False
 
-            logger.info(f"조건 평가: {condition}, 값: {value}, 결과: {result}")
+            logger.info(
+                f"조건 평가: {input_value} {operator} {compare_value}, 결과: {result}"
+            )
             return {"true": result, "false": not result}
+        except (ValueError, TypeError) as e:
+            logger.error(f"조건문 실행 실패 (비교 불가능한 값): {e}", exc_info=True)
+            return {"true": False, "false": True}
         except Exception as e:
             logger.error(f"조건문 실행 실패: {e}", exc_info=True)
             return {"true": False, "false": True}

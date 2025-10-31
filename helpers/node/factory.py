@@ -9,6 +9,7 @@ from helpers.node.node_templates.text_input import TextInputNode
 from helpers.node.node_templates.utility_nodes import (  # MergeNode,
     DelayNode,
     JSONOutputNode,
+    JSONParserNode,
     SplitNode,
     TextOutputNode,
     WebhookNode,
@@ -29,6 +30,7 @@ class NodeFactory:
         NodeType.WEBHOOK: WebhookNode,
         # NodeType.MERGE: MergeNode,
         NodeType.SPLIT: SplitNode,
+        NodeType.PARSER_NODE: JSONParserNode,  # PasrerNode,
     }
 
     @classmethod

@@ -11,6 +11,9 @@ from alembic import context  # type: ignore
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import all models to ensure they are registered with SQLModel
+from database.graph.edge import Edge  # noqa: F401
+from database.graph.graph import Graph  # noqa: F401
+from database.graph.vertex import Vertex  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -299,3 +299,33 @@ class JSONOutputNode(BaseNode):
 
     def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
         return "data" in inputs
+
+
+class JSONParserNode(BaseNode):
+    """JSON 파서 노드"""
+
+    def __init__(self, node_id: str, properties: Dict[str, Any]):
+        super().__init__(node_id, properties)
+        self.inputs = [
+            NodeInputOutput(
+                name="data",
+                type=NodeInputOutputType.TEXT,
+                description="파싱할 텍스트 데이터",
+            )
+        ]
+        self.outputs = [
+            NodeInputOutput(
+                name="output",
+                type=NodeInputOutputType.JSON,
+                description="파싱된 JSON 데이터",
+            )
+        ]
+
+    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        data = inputs.get("data", {})
+        try:
+            # json_data = json.loads(data)
+            json_data = data
+            return {"output": json_data}
+        except json.JSONDecodeError:
+            raise ValueError("유효하지 않은 JSON 데이터")

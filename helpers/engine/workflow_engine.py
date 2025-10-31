@@ -237,10 +237,10 @@ class WorkflowEngine:
             "result": node.result,
             "error": node.error,
             "inputs": [
-                input_schema.__dict__ for input_schema in node.get_input_schema()
+                input_schema.model_dump() for input_schema in node.get_input_schema()
             ],
             "outputs": [
-                output_schema.__dict__ for output_schema in node.get_output_schema()
+                output_schema.model_dump() for output_schema in node.get_output_schema()
             ],
         }
 
