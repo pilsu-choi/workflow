@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class VertexCreateRequest(BaseModel):
     """Vertex 생성 요청 DTO"""
 
+    id: int | None = None  # 클라이언트 측 임시 ID (업데이트 시 매핑용)
     type: str
     properties: Dict[str, Any] = {}
 

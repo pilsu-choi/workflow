@@ -11,7 +11,7 @@ from dto.workflow.workflow_dto import (
     WorkflowExecuteRequest,
     WorkflowUpdateRequest,
 )
-from helpers.node.node_base import NodeType
+from helpers.node.node_type import NodeType
 from helpers.utils.dependencies import (
     get_graph_service,
     get_workflow_execution_service,
@@ -38,10 +38,16 @@ async def create_workflow(
 
         # 버텍스들 생성
         vertices: list[Vertex] = []
+        vertex_temp_ids: list[int] = []  # 클라이언트의 임시 ID 저장
         for vertex_data in request.vertices:
             vertices.append(
                 Vertex(type=vertex_data.type, properties=vertex_data.properties)
             )
+            # 임시 ID가 제공된 경우 저장 (없으면 인덱스 사용)
+            if vertex_data.id is not None:
+                vertex_temp_ids.append(vertex_data.id)
+            else:
+                vertex_temp_ids.append(len(vertex_temp_ids))
 
         # 엣지들 생성
         edges: list[Edge] = []
@@ -57,7 +63,9 @@ async def create_workflow(
             )
 
         # 워크플로우 저장
-        saved_graph = await persistence_service.save(graph, vertices, edges)
+        saved_graph = await persistence_service.save(
+            graph, vertices, edges, vertex_temp_ids
+        )
 
         return {
             "success": True,
@@ -284,8 +292,10 @@ async def update_workflow(
 
         # 버텍스들 생성 (제공된 경우)
         vertices = None
+        vertex_temp_ids = None
         if request.vertices is not None:
             vertices = []
+            vertex_temp_ids = []
             for vertex_data in request.vertices:
                 vertices.append(
                     Vertex(
@@ -293,6 +303,11 @@ async def update_workflow(
                         properties=vertex_data.properties,
                     )
                 )
+                # 임시 ID가 제공된 경우 저장 (없으면 인덱스 사용)
+                if vertex_data.id is not None:
+                    vertex_temp_ids.append(vertex_data.id)
+                else:
+                    vertex_temp_ids.append(len(vertex_temp_ids))
 
         # 엣지들 생성 (제공된 경우)
         edges = None
@@ -315,6 +330,7 @@ async def update_workflow(
             graph_updates=graph_updates if graph_updates else None,
             vertices=vertices,
             edges=edges,
+            vertex_temp_ids=vertex_temp_ids,
         )
 
         return {

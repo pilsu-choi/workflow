@@ -33,7 +33,11 @@ class WorkflowPersistenceService:
         self.edge_repository = edge_repository
 
     async def save(
-        self, graph: Graph, vertices: List[Vertex], edges: List[Edge]
+        self,
+        graph: Graph,
+        vertices: List[Vertex],
+        edges: List[Edge],
+        vertex_temp_ids: List[int] | None = None,
     ) -> Graph:
         """워크플로우를 데이터베이스에 저장"""
         try:
@@ -42,9 +46,11 @@ class WorkflowPersistenceService:
             graph_id = saved_graph.id
 
             # 버텍스들 저장하고 ID 매핑 생성
-            vertex_id_map = await self._save_vertices(vertices, graph_id)
+            vertex_id_map = await self._save_vertices(
+                vertices, graph_id, vertex_temp_ids
+            )
 
-            # 엣지들 저장 (인덱스를 실제 vertex ID로 매핑)
+            # 엣지들 저장 (임시 ID를 실제 vertex ID로 매핑)
             await self._save_edges(edges, graph_id, vertex_id_map)
 
             # 모든 작업이 성공하면 commit
@@ -86,6 +92,7 @@ class WorkflowPersistenceService:
         graph_updates: Dict[str, Any] | None = None,
         vertices: List[Vertex] | None = None,
         edges: List[Edge] | None = None,
+        vertex_temp_ids: List[int] | None = None,
     ) -> Graph:
         """워크플로우 업데이트"""
         try:
@@ -104,8 +111,18 @@ class WorkflowPersistenceService:
                 await db.flush()
 
             # vertices와 edges가 제공된 경우, 기존 것들을 삭제하고 새로 생성
+            # 중요: 외래 키 제약 조건 때문에 edges를 먼저 삭제해야 함
             vertex_id_map = {}
+
             if vertices is not None:
+                # 기존 edges를 먼저 삭제 (외래 키 제약 조건)
+                existing_edges = await db.execute(
+                    select(Edge).where(Edge.graph_id == graph_id)
+                )
+                for edge in existing_edges.scalars().all():
+                    await db.delete(edge)
+                await db.flush()
+
                 # 기존 vertices 삭제
                 existing_vertices = await db.execute(
                     select(Vertex).where(Vertex.graph_id == graph_id)
@@ -115,18 +132,22 @@ class WorkflowPersistenceService:
                 await db.flush()
 
                 # 새 vertices 저장하고 ID 매핑 생성
-                vertex_id_map = await self._save_vertices(vertices, graph_id)
+                vertex_id_map = await self._save_vertices(
+                    vertices, graph_id, vertex_temp_ids
+                )
 
             if edges is not None:
-                # 기존 edges 삭제
-                existing_edges = await db.execute(
-                    select(Edge).where(Edge.graph_id == graph_id)
-                )
-                for edge in existing_edges.scalars().all():
-                    await db.delete(edge)
-                await db.flush()
+                # vertices가 제공되지 않은 경우에만 기존 edges 삭제
+                # (vertices가 제공된 경우 이미 위에서 삭제됨)
+                if vertices is None:
+                    existing_edges = await db.execute(
+                        select(Edge).where(Edge.graph_id == graph_id)
+                    )
+                    for edge in existing_edges.scalars().all():
+                        await db.delete(edge)
+                    await db.flush()
 
-                # 새 edges 저장 (인덱스를 실제 vertex ID로 매핑)
+                # 새 edges 저장 (임시 ID를 실제 vertex ID로 매핑)
                 await self._save_edges(edges, graph_id, vertex_id_map)
 
             # 모든 작업 commit
@@ -179,24 +200,28 @@ class WorkflowPersistenceService:
             return {"success": False, "error": str(e)}
 
     async def _save_vertices(
-        self, vertices: List[Vertex], graph_id: int
+        self,
+        vertices: List[Vertex],
+        graph_id: int,
+        vertex_temp_ids: List[int] | None = None,
     ) -> Dict[int, int]:
-        """버텍스들 저장하고 인덱스 -> ID 매핑 반환"""
+        """버텍스들 저장하고 임시 ID -> 실제 DB ID 매핑 반환"""
         vertex_id_map = {}
         for idx, vertex in enumerate(vertices):
             vertex.graph_id = graph_id
             saved_vertex = await self.vertex_service.create_vertex(vertex)
-            # 인덱스를 실제 데이터베이스 ID로 매핑
-            vertex_id_map[idx] = saved_vertex.id
+            # 임시 ID가 제공된 경우 사용, 아니면 인덱스 사용
+            temp_id = vertex_temp_ids[idx] if vertex_temp_ids else idx
+            vertex_id_map[temp_id] = saved_vertex.id
         return vertex_id_map
 
     async def _save_edges(
         self, edges: List[Edge], graph_id: int, vertex_id_map: Dict[int, int]
     ):
-        """엣지들 저장 (source_id와 target_id를 인덱스에서 실제 ID로 매핑)"""
+        """엣지들 저장 (source_id와 target_id를 임시 ID에서 실제 DB ID로 매핑)"""
         for edge in edges:
             edge.graph_id = graph_id
-            # source_id와 target_id가 인덱스인 경우 실제 vertex ID로 변환
+            # source_id와 target_id를 임시 ID에서 실제 vertex ID로 변환
             if edge.source_id in vertex_id_map:
                 edge.source_id = vertex_id_map[edge.source_id]
             if edge.target_id in vertex_id_map:
