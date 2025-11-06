@@ -1,3 +1,4 @@
+import uuid
 from collections import defaultdict, deque
 from datetime import datetime
 from typing import Any, Dict, List, Set
@@ -25,6 +26,14 @@ class WorkflowEngine:
         self.reverse_dependencies: Dict[str, Set[str]] = defaultdict(set)
         self.is_first_execution: bool = True
         self.initial_inputs: Dict[str, Any] = {}
+        self.logs: List[str] = []  # 실행 중 로그 메시지 수집
+
+    def _add_log(self, message: str):
+        """로그 메시지 추가"""
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        log_entry = f"[{timestamp}] {message}"
+        self.logs.append(log_entry)
+        logger.info(message)
 
     async def load(self, vertices: List[Vertex], edges: List[Edge]) -> bool:
         """데이터베이스에서 워크플로우 로드"""
@@ -50,12 +59,13 @@ class WorkflowEngine:
                 self.dependencies[target_id].add(source_id)
                 self.reverse_dependencies[source_id].add(target_id)
 
-            logger.info(
+            self._add_log(
                 f"워크플로우 로드 완료: {len(self.node_instances)}개 노드, {len(edges)}개 엣지"
             )
             return True
 
         except Exception as e:
+            self._add_log(f"워크플로우 로드 실패: {str(e)}")
             logger.error(f"워크플로우 로드 실패: {str(e)}", exc_info=True)
             return False
 
@@ -119,13 +129,13 @@ class WorkflowEngine:
 
             # 입력 검증
             if not node.validate_inputs(inputs):
-                logger.error(
-                    f"노드 {node_id} 입력 검증 실패 - 입력: {inputs}, 필요: {[inp.name for inp in node.get_input_schema()]}"
-                )
+                error_msg = f"노드 {node_id} 입력 검증 실패 - 입력: {inputs}, 필요: {[inp.name for inp in node.get_input_schema()]}"
+                self._add_log(error_msg)
+                logger.error(error_msg)
                 raise ValueError(f"노드 {node_id}의 입력 검증 실패")
 
             # 노드 실행
-            logger.info(f"노드 {node_id} 실행 시작")
+            self._add_log(f"노드 {node_id} 실행 시작")
             result = await node.execute(inputs)
 
             # 결과 저장
@@ -166,11 +176,12 @@ class WorkflowEngine:
             if self.is_first_execution:
                 self.is_first_execution = False
 
-            logger.info(f"노드 {node_id} 실행 완료")
+            self._add_log(f"노드 {node_id} 실행 완료")
             return result
 
         except Exception as e:
             error_msg = f"노드 {node_id} 실행 실패: {str(e)}"
+            self._add_log(error_msg)
             logger.error(error_msg, exc_info=True)
             node.set_error(error_msg)
             raise
@@ -181,6 +192,7 @@ class WorkflowEngine:
         """워크플로우 실행"""
         result = WorkflowExecutionResult()
         result.start_time = datetime.now()
+        result.execution_id = str(uuid.uuid4())  # 실행 ID 생성
 
         try:
             # 초기 입력 저장
@@ -190,7 +202,9 @@ class WorkflowEngine:
             execution_order = self._topological_sort()
             result.execution_order = execution_order
 
-            logger.info(f"워크플로우 실행 시작: {len(execution_order)}개 노드")
+            self._add_log(
+                f"워크플로우 실행 시작 (execution_id: {result.execution_id}): {len(execution_order)}개 노드"
+            )
 
             # 순차적으로 노드 실행
             for node_id in execution_order:
@@ -210,8 +224,9 @@ class WorkflowEngine:
             result.success = len(result.errors) == 0
 
             if result.success:
-                logger.info(f"워크플로우 실행 성공: {result.execution_time:.2f}초")
+                self._add_log(f"워크플로우 실행 성공: {result.execution_time:.2f}초")
             else:
+                self._add_log(f"워크플로우 실행 실패: {len(result.errors)}개 에러")
                 logger.error(
                     f"워크플로우 실행 실패: {len(result.errors)}개 에러", exc_info=True
                 )
@@ -221,9 +236,13 @@ class WorkflowEngine:
             result.execution_time = (
                 result.end_time - result.start_time
             ).total_seconds()
-            result.errors.append(f"워크플로우 실행 중 예상치 못한 오류: {str(e)}")
+            error_msg = f"워크플로우 실행 중 예상치 못한 오류: {str(e)}"
+            result.errors.append(error_msg)
+            self._add_log(error_msg)
             logger.error(f"워크플로우 실행 중 오류: {str(e)}", exc_info=True)
 
+        # 수집된 로그를 result에 복사
+        result.logs = self.logs.copy()
         return result
 
     def get_node_status(self, node_id: str) -> Dict[str, Any]:
@@ -262,6 +281,7 @@ class WorkflowEngine:
         self.execution_context.clear()
         self.initial_inputs = {}
         self.is_first_execution = True
+        self.logs.clear()  # 로그도 초기화
         for node in self.node_instances.values():
             node.status = "pending"
             node.result = None
