@@ -1,50 +1,16 @@
-import enum
 import uuid
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Literal
 
-from pydantic import Field
+from pydantic import BaseModel, Field
+
+from helpers.node.node_type import NodeInputOutputType
 
 if TYPE_CHECKING:
     from database.graph.edge import Edge
 
 
-class NodeType(enum.Enum):
-    # Input/Output nodes
-    TEXT_INPUT = "TEXT_INPUT"
-    TEXT_OUTPUT = "TEXT_OUTPUT"
-    JSON_INPUT = "JSON_INPUT"
-    JSON_OUTPUT = "JSON_OUTPUT"
-    FILE_INPUT = "FILE_INPUT"
-    FILE_OUTPUT = "FILE_OUTPUT"
-
-    # Processing nodes
-    LLM_NODE = "LLM_NODE"
-    API_CALL = "API_CALL"
-    FUNCTION = "FUNCTION"
-    CONDITION = "CONDITION"
-    LOOP = "LOOP"
-
-    # Utility nodes
-    WEBHOOK = "WEBHOOK"
-    DELAY = "DELAY"
-    MERGE = "MERGE"
-    SPLIT = "SPLIT"
-
-
-class NodeInputOutputType(enum.Enum):
-    TEXT = "TEXT"
-    JSON = "JSON"
-    FILE = "FILE"
-    NUMBER = "NUMBER"
-    BOOLEAN = "BOOLEAN"
-    ARRAY = "ARRAY"
-    OBJECT = "OBJECT"
-
-
-@dataclass
-class NodeInputOutput:
+class NodeInputOutput(BaseModel):
     id: str = Field(
         default_factory=lambda: str(uuid.uuid4())[:8],
         description="Node의 input, output 포트 ID",

@@ -1,18 +1,20 @@
-# 노드 팩토리
 from typing import Any, Dict
 
-from helpers.node.node_base import BaseNode, NodeType
+from helpers.node.node_base import BaseNode
 from helpers.node.node_templates.condition import ConditionNode
 from helpers.node.node_templates.function import FunctionNode
 from helpers.node.node_templates.llm import LLMNode
 from helpers.node.node_templates.text_input import TextInputNode
-from helpers.node.node_templates.utility_nodes import (  # MergeNode,
+from helpers.node.node_templates.utility_nodes import (
+    ChatInputNode,
     DelayNode,
     JSONOutputNode,
+    JSONParserNode,
     SplitNode,
     TextOutputNode,
     WebhookNode,
 )
+from helpers.node.node_type import NodeType
 
 
 class NodeFactory:
@@ -29,6 +31,8 @@ class NodeFactory:
         NodeType.WEBHOOK: WebhookNode,
         # NodeType.MERGE: MergeNode,
         NodeType.SPLIT: SplitNode,
+        NodeType.PARSER_NODE: JSONParserNode,  # PasrerNode,
+        NodeType.CHAT_INPUT: ChatInputNode,
     }
 
     @classmethod

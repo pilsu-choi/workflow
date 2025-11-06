@@ -37,8 +37,7 @@ class DelayNode(BaseNode):
         return {"output": f"지연 {delay_seconds}초 완료"}
 
     def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
-        delay_seconds = inputs.get("delay_seconds", 1)
-        return isinstance(delay_seconds, (int, float)) and delay_seconds >= 0
+        return super().validate_inputs(inputs)
 
 
 class WebhookNode(BaseNode):
@@ -116,7 +115,7 @@ class WebhookNode(BaseNode):
             raise Exception(f"웹훅 호출 실패: {str(e)}")
 
     def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
-        return "url" in inputs and inputs["url"]
+        return super().validate_inputs(inputs)
 
 
 # class MergeNode(BaseNode):
@@ -235,7 +234,7 @@ class SplitNode(BaseNode):
         return {"split_data": split_data}
 
     def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
-        return "data" in inputs and inputs["data"]
+        return super().validate_inputs(inputs)
 
 
 class TextOutputNode(BaseNode):
@@ -268,7 +267,7 @@ class TextOutputNode(BaseNode):
         return result
 
     def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
-        return "text" in inputs
+        return super().validate_inputs(inputs)
 
 
 class JSONOutputNode(BaseNode):
@@ -298,4 +297,62 @@ class JSONOutputNode(BaseNode):
         return {"output": data}
 
     def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
-        return "data" in inputs
+        return super().validate_inputs(inputs)
+
+
+class JSONParserNode(BaseNode):
+    """JSON 파서 노드"""
+
+    def __init__(self, node_id: str, properties: Dict[str, Any]):
+        super().__init__(node_id, properties)
+        self.inputs = [
+            NodeInputOutput(
+                name="data",
+                type=NodeInputOutputType.TEXT,
+                description="파싱할 텍스트 데이터",
+            )
+        ]
+        self.outputs = [
+            NodeInputOutput(
+                name="output",
+                type=NodeInputOutputType.JSON,
+                description="파싱된 JSON 데이터",
+            )
+        ]
+
+    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        data = inputs.get("data", {})
+        try:
+            # json_data = json.loads(data)
+            json_data = data
+            return {"output": json_data}
+        except json.JSONDecodeError:
+            raise ValueError("유효하지 않은 JSON 데이터")
+
+
+class ChatInputNode(BaseNode):
+    """채팅 입력 노드"""
+
+    def __init__(self, node_id: str, properties: Dict[str, Any]):
+        super().__init__(node_id, properties)
+        self.inputs = [
+            NodeInputOutput(
+                name="message",
+                type=NodeInputOutputType.TEXT,
+                description="채팅 메시지",
+            )
+        ]
+        self.outputs = [
+            NodeInputOutput(
+                name="output",
+                type=NodeInputOutputType.TEXT,
+                description="채팅 메시지",
+            )
+        ]
+
+    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        message = inputs.get("message", "")
+        return {"output": message}
+
+    def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
+        return super().validate_inputs(inputs)
