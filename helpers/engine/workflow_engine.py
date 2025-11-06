@@ -6,7 +6,8 @@ from database.graph.edge import Edge
 from database.graph.vertex import Vertex
 from dto.workflow.workflow_dto import WorkflowExecutionResult
 from helpers.node.factory import NodeFactory
-from helpers.node.node_base import BaseNode, NodeType
+from helpers.node.node_base import BaseNode
+from helpers.node.node_type import NodeType
 from setting.logger import get_logger
 
 logger = get_logger(__name__)
@@ -237,10 +238,10 @@ class WorkflowEngine:
             "result": node.result,
             "error": node.error,
             "inputs": [
-                input_schema.__dict__ for input_schema in node.get_input_schema()
+                input_schema.model_dump() for input_schema in node.get_input_schema()
             ],
             "outputs": [
-                output_schema.__dict__ for output_schema in node.get_output_schema()
+                output_schema.model_dump() for output_schema in node.get_output_schema()
             ],
         }
 
