@@ -11,7 +11,7 @@ from dto.workflow.workflow_dto import (
     WorkflowExecuteRequest,
     WorkflowUpdateRequest,
 )
-from helpers.node.node_type import NodeType
+from helpers.node.node_type import NODE_TYPES
 from helpers.utils.dependencies import (
     get_graph_service,
     get_workflow_execution_service,
@@ -211,14 +211,7 @@ async def delete_workflow(
 @router.get("/node-types/", response_model=List[Dict[str, Any]])
 async def get_node_types():
     """사용 가능한 노드 타입들 조회"""
-    return [
-        {
-            "type": node_type.value,
-            "name": node_type.name,
-            "description": f"{node_type.name} 노드",
-        }
-        for node_type in NodeType
-    ]
+    return NODE_TYPES.values()
 
 
 # === Graph 메타데이터 전용 엔드포인트 ===
