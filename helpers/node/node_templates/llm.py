@@ -61,7 +61,6 @@ class LLMNode(BaseNode):
         if api_key is None:
             raise ValueError("OPENAI_API_KEY environment variable is not set")
         response = await call_openai_model(model, prompt, api_key)
-        inputs["response"] = response
         result = inputs.copy()
         result["response"] = response
         result["node_type"] = self.__class__.__name__
