@@ -33,6 +33,8 @@ class WorkflowExecutionResult:
         self.node_results: Dict[str, Any] = {}
         self.errors: List[str] = []
         self.execution_order: List[str] = []
+        self.execution_id: str | None = None
+        self.logs: List[str] = []  # 실행 중 수집된 로그 메시지들
 
 
 class WorkflowCreateRequest(BaseModel):
