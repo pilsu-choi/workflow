@@ -17,6 +17,8 @@ dependencies = [
     "uvicorn>=0.37.0",
     "pydeps>=3.0.1",
     "pre-commit>=4.3.0",
+    "aiohttp>=3.13.2",
+    "elasticsearch==9.2.0",
 ]
 
 [dependency-groups]
