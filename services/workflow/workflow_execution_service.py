@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 from dto.workflow.workflow_dto import WorkflowExecutionResult
 from helpers.engine.workflow_engine import WorkflowEngine
+from services.workflow.workflow_log_service import WorkflowLogService
 from services.workflow.workflow_persistence_service import WorkflowPersistenceService
 from setting.logger import get_logger
 
@@ -11,8 +12,13 @@ logger = get_logger(__name__)
 class WorkflowExecutionService:
     """워크플로우 실행 전용 서비스 - 워크플로우 실행 및 상태 관리 담당"""
 
-    def __init__(self, persistence_service: WorkflowPersistenceService):
+    def __init__(
+        self,
+        persistence_service: WorkflowPersistenceService,
+        log_service: WorkflowLogService | None = None,
+    ):
         self.persistence_service = persistence_service
+        self.log_service = log_service
         self.workflow_engine = WorkflowEngine()
 
     async def execute_workflow(
@@ -31,7 +37,20 @@ class WorkflowExecutionService:
             # 워크플로우 실행
             result = await self.workflow_engine.start(initial_inputs)
 
-            return self._format_execution_result(result)
+            # 로그 저장 (log_service가 있는 경우)
+            if self.log_service:
+                try:
+                    await self.log_service.save_execution_log(graph_id, result)
+                    logger.info(
+                        f"워크플로우 실행 로그 저장 완료: execution_id={result.execution_id}"
+                    )
+                except Exception as log_error:
+                    logger.error(f"로그 저장 실패: {str(log_error)}", exc_info=True)
+                    # 로그 저장 실패는 워크플로우 실행 자체는 성공한 것으로 처리
+
+            formatted_result = self._format_execution_result(result)
+            formatted_result["execution_id"] = result.execution_id
+            return formatted_result
 
         except Exception as e:
             logger.error(f"워크플로우 실행 실패: {str(e)}", exc_info=True)
