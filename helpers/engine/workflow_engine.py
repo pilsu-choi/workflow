@@ -131,8 +131,10 @@ class WorkflowEngine:
             if not node.validate_inputs(inputs):
                 error_msg = f"노드 {node_id} 입력 검증 실패 - 입력: {inputs}, 필요: {[inp.name for inp in node.get_input_schema()]}"
                 self._add_log(error_msg)
-                logger.error(error_msg)
-                raise ValueError(f"노드 {node_id}의 입력 검증 실패")
+                logger.error(error_msg, exc_info=True)
+                raise ValueError(
+                    f"노드 {node_id}, {node.get_type().value}의 입력 검증 실패"
+                )
 
             # 노드 실행
             self._add_log(f"노드 {node_id} 실행 시작")

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Literal
 
 from pydantic import BaseModel, Field
 
-from helpers.node.node_type import NodeInputOutputType
+from helpers.node.node_type import NodeInputOutputType, NodeType
 
 if TYPE_CHECKING:
     from database.graph.edge import Edge
@@ -25,11 +25,13 @@ class NodeInputOutput(BaseModel):
 class BaseNode(ABC):
     """워크플로우 노드의 기본 클래스"""
 
+    inputs: List[NodeInputOutput] = []
+    outputs: List[NodeInputOutput] = []
+    type: NodeType
+
     def __init__(self, node_id: str, properties: Dict[str, Any]):
         self.node_id = node_id
         self.properties = properties
-        self.inputs: List[NodeInputOutput] = []
-        self.outputs: List[NodeInputOutput] = []
         self.status: str = "pending"  # pending, running, completed, failed
         self.error: str | None = None
         self.result: Any = None  # 노드 실행 결과
@@ -55,13 +57,20 @@ class BaseNode(ABC):
                 return False
         return True
 
+    @classmethod
     def get_input_schema(self) -> List[NodeInputOutput]:
         """입력 스키마 반환"""
         return self.inputs
 
+    @classmethod
     def get_output_schema(self) -> List[NodeInputOutput]:
         """출력 스키마 반환"""
         return self.outputs
+
+    @classmethod
+    def get_type(self) -> NodeType:
+        """노드 타입 반환"""
+        return self.type
 
     def set_status(self, status: str):
         """상태 설정"""
