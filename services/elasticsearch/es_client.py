@@ -75,7 +75,7 @@ class ElasticsearchClient:
                 await self.client.indices.create(index=self.index_name, body=mapping)
                 logger.info(f"Elasticsearch 인덱스 생성: {self.index_name}")
         except Exception as e:
-            logger.error(f"인덱스 생성 실패: {str(e)}")
+            logger.error(f"인덱스 생성 실패: {str(e)}", exc_info=True)
 
     async def index_log(self, execution_id: str, log_entry: Dict[str, Any]):
         """단일 로그 인덱싱"""
@@ -85,7 +85,7 @@ class ElasticsearchClient:
         try:
             await self.client.index(index=self.index_name, body=log_entry)
         except Exception as e:
-            logger.error(f"로그 인덱싱 실패: {str(e)}")
+            logger.error(f"로그 인덱싱 실패: {str(e)}", exc_info=True)
 
     async def bulk_index_logs(
         self, execution_id: str, log_entries: List[Dict[str, Any]]
@@ -108,7 +108,7 @@ class ElasticsearchClient:
                 f"(execution_id={execution_id})"
             )
         except Exception as e:
-            logger.error(f"배치 인덱싱 실패: {str(e)}")
+            logger.error(f"배치 인덱싱 실패: {str(e)}", exc_info=True)
 
     async def search_logs(
         self,
@@ -165,7 +165,7 @@ class ElasticsearchClient:
 
             return [hit["_source"] for hit in result["hits"]["hits"]]
         except Exception as e:
-            logger.error(f"로그 검색 실패: {str(e)}")
+            logger.error(f"로그 검색 실패: {str(e)}", exc_info=True)
             return []
 
     async def delete_logs_by_execution_id(self, execution_id: str):
@@ -180,7 +180,7 @@ class ElasticsearchClient:
             )
             logger.info(f"ES 로그 삭제: execution_id={execution_id}")
         except Exception as e:
-            logger.error(f"로그 삭제 실패: {str(e)}")
+            logger.error(f"로그 삭제 실패: {str(e)}", exc_info=True)
 
     async def get_log_stats(self, graph_id: int | None = None) -> Dict[str, Any]:
         """로그 통계 조회"""
@@ -221,7 +221,7 @@ class ElasticsearchClient:
                 ],
             }
         except Exception as e:
-            logger.error(f"통계 조회 실패: {str(e)}")
+            logger.error(f"통계 조회 실패: {str(e)}", exc_info=True)
             return {}
 
     async def close(self):
