@@ -11,7 +11,7 @@ from dto.workflow.workflow_dto import (
     WorkflowExecuteRequest,
     WorkflowUpdateRequest,
 )
-from helpers.node.node_type import NODE_TYPES
+from helpers.node.node_templates.node_template_types import NODE_TYPES
 from helpers.utils.dependencies import (
     get_graph_service,
     get_workflow_execution_service,
