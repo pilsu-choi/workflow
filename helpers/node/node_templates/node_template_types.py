@@ -1,8 +1,9 @@
 import enum
 from typing import Dict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from dto.workflow.workflow_dto import examples
 from helpers.node.node_base import NodeInputOutput
 from helpers.node.node_templates.condition import ConditionNode
 from helpers.node.node_templates.llm import LLMNode
@@ -21,8 +22,8 @@ class NodeTypeDefinition(BaseModel):
     category: str
     icon: str
     color: str
-    inputs: list[NodeInputOutput]
-    outputs: list[NodeInputOutput]
+    inputs: list[NodeInputOutput] = Field(examples=[examples.EXAMPLE_NODE_INPUTS])
+    outputs: list[NodeInputOutput] = Field(examples=[examples.EXAMPLE_NODE_OUTPUTS])
 
 
 class NodeTypeCategory(enum.Enum):
@@ -34,7 +35,7 @@ class NodeTypeCategory(enum.Enum):
 
 NODE_TYPES: Dict[NodeType, NodeTypeDefinition] = {
     NodeType.LLM_NODE: NodeTypeDefinition(
-        type="LLM_NODE",
+        type=NodeType.LLM_NODE.value,
         label="Language Model",
         description="AI language model with configurable provider and prompts",
         category=NodeTypeCategory.AI_ML,
@@ -44,7 +45,7 @@ NODE_TYPES: Dict[NodeType, NodeTypeDefinition] = {
         outputs=LLMNode.get_output_schema(),
     ),
     NodeType.PARSER_NODE: NodeTypeDefinition(
-        type="PARSER_NODE",
+        type=NodeType.PARSER_NODE.value,
         label="Parser",
         description="Parse and transform JSON data with various operations",
         category=NodeTypeCategory.DATA_PROCESSING,
@@ -54,7 +55,7 @@ NODE_TYPES: Dict[NodeType, NodeTypeDefinition] = {
         outputs=JSONParserNode.get_output_schema(),
     ),
     NodeType.CONDITION: NodeTypeDefinition(
-        type="CONDITION",
+        type=NodeType.CONDITION.value,
         label="If/Else",
         description="Conditional logic with comparison operators",
         category=NodeTypeCategory.LOGIC,
@@ -64,7 +65,7 @@ NODE_TYPES: Dict[NodeType, NodeTypeDefinition] = {
         outputs=ConditionNode.get_output_schema(),
     ),
     NodeType.CHAT_INPUT: NodeTypeDefinition(
-        type="CHAT_INPUT",
+        type=NodeType.CHAT_INPUT.value,
         label="CHAT INPUT",
         description="Input node for chat-based workflows",
         category=NodeTypeCategory.INPUT_OUTPUT,
@@ -74,7 +75,7 @@ NODE_TYPES: Dict[NodeType, NodeTypeDefinition] = {
         outputs=ChatInputNode.get_output_schema(),
     ),
     NodeType.CHAT_OUTPUT: NodeTypeDefinition(
-        type="CHAT_OUTPUT",
+        type=NodeType.CHAT_OUTPUT.value,
         label="CHAT OUTPUT",
         description="Output node for chat-based workflows with configurable formatting",
         category=NodeTypeCategory.INPUT_OUTPUT,
