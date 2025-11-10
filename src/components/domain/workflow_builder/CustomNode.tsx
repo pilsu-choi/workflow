@@ -1,21 +1,30 @@
 import React, { useMemo } from "react";
 import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
-import { NODE_TYPES } from "../../../types/workflow";
 import LanguageModelNode from "./nodes/LanguageModelNode";
 import ParserNode from "./nodes/ParserNode";
 import LogicNode from "./nodes/LogicNode";
 import ChatInputNode from "./nodes/ChatInputNode";
 import ChatOutputNode from "./nodes/ChatOutputNode";
+import type { NodeTypeDefinition, FlowNode } from "../../../types/workflow";
 
 // Get node style by type
-const getNodeStyle = (nodeType: string) => {
-  const nodeDefinition = NODE_TYPES.find((node) => node.type === nodeType);
-  if (nodeDefinition) {
+const getNodeStyle = (nodeType: string, category?: string) => {
+  // Use category color if available
+  if (category) {
+    const categoryColors: Record<string, string> = {
+      "AI/ML": "#8b5cf6",
+      "Data Processing": "#3b82f6",
+      Logic: "#f59e0b",
+      "I/O": "#10b981",
+      Integration: "#06b6d4",
+    };
+
+    const color = categoryColors[category] || "#6b7280";
     return {
       background: "white",
-      border: nodeDefinition.color,
-      color: nodeDefinition.color,
+      border: color,
+      color: color,
     };
   }
 
@@ -54,17 +63,33 @@ const getNodeStyle = (nodeType: string) => {
   );
 };
 
-const CustomNode: React.FC<NodeProps> = React.memo((props) => {
+const CustomNode: React.FC<NodeProps<FlowNode>> = React.memo((props) => {
   const { data, selected } = props;
 
-  // Memoize nodeDefinition to avoid repeated find operations
-  const nodeDefinition = useMemo(
-    () => NODE_TYPES.find((node) => node.type === data.nodeType),
-    [data.nodeType]
-  );
+  // data already contains category, inputs, outputs from WorkflowEditor
+  const nodeDefinition: NodeTypeDefinition | undefined = data.category
+    ? ({
+        type: data.nodeType,
+        category: data.category,
+        inputs: data.inputs || [],
+        outputs: data.outputs || [],
+      } as NodeTypeDefinition)
+    : undefined;
+
+  // Debug: Log inputs/outputs to check their structure
+  // if (data.inputs || data.outputs) {
+  //   console.log("Node handles:", {
+  //     nodeType: data.nodeType,
+  //     inputs: data.inputs,
+  //     outputs: data.outputs,
+  //   });
+  // }
 
   // Memoize style calculation
-  const style = useMemo(() => getNodeStyle(data.nodeType), [data.nodeType]);
+  const style = useMemo(
+    () => getNodeStyle(data.nodeType, data.category),
+    [data.nodeType, data.category]
+  );
 
   // Use specialized components based on node type
   if (nodeDefinition) {
@@ -98,21 +123,31 @@ const CustomNode: React.FC<NodeProps> = React.memo((props) => {
     >
       {/* Input handles */}
       {nodeDefinition?.inputs && nodeDefinition.inputs.length > 0 ? (
-        nodeDefinition.inputs.map((input, index) => (
-          <Handle
-            key={`input-${input}`}
-            type="target"
-            position={Position.Top}
-            id={input}
-            style={{
-              left: `${
-                (index + 1) * (100 / (nodeDefinition.inputs.length + 1))
-              }%`,
-              transform: "translateX(-50%)",
-            }}
-            className="w-3 h-3"
-          />
-        ))
+        nodeDefinition.inputs.map((input, index) => {
+          // Ensure id is a string
+          const handleId =
+            typeof input === "string"
+              ? input
+              : typeof input === "object" && input !== null
+              ? String(input.name || input.id || `input-${index}`)
+              : `input-${index}`;
+
+          return (
+            <Handle
+              key={`input-${index}-${handleId}`}
+              type="target"
+              position={Position.Top}
+              id={handleId}
+              style={{
+                left: `${
+                  (index + 1) * (100 / (nodeDefinition.inputs.length + 1))
+                }%`,
+                transform: "translateX(-50%)",
+              }}
+              className="w-3 h-3"
+            />
+          );
+        })
       ) : (
         <Handle
           type="target"
@@ -122,8 +157,8 @@ const CustomNode: React.FC<NodeProps> = React.memo((props) => {
         />
       )}
 
-      <div className="font-bold text-sm">{data.label}</div>
-      <div className="text-xs opacity-70">{data.nodeType}</div>
+      <div className="font-bold text-sm">{String(data.label)}</div>
+      <div className="text-xs opacity-70">{String(data.nodeType)}</div>
       {nodeDefinition?.category && (
         <div className="text-xs opacity-50 capitalize">
           {nodeDefinition.category.replace("_", " ")}
@@ -132,21 +167,31 @@ const CustomNode: React.FC<NodeProps> = React.memo((props) => {
 
       {/* Output handles */}
       {nodeDefinition?.outputs && nodeDefinition.outputs.length > 0 ? (
-        nodeDefinition.outputs.map((output, index) => (
-          <Handle
-            key={`output-${output}`}
-            type="source"
-            position={Position.Bottom}
-            id={output}
-            style={{
-              left: `${
-                (index + 1) * (100 / (nodeDefinition.outputs.length + 1))
-              }%`,
-              transform: "translateX(-50%)",
-            }}
-            className="w-3 h-3"
-          />
-        ))
+        nodeDefinition.outputs.map((output, index) => {
+          // Ensure id is a string
+          const handleId =
+            typeof output === "string"
+              ? output
+              : typeof output === "object" && output !== null
+              ? String(output.name || output.id || `output-${index}`)
+              : `output-${index}`;
+
+          return (
+            <Handle
+              key={`output-${index}-${handleId}`}
+              type="source"
+              position={Position.Bottom}
+              id={handleId}
+              style={{
+                left: `${
+                  (index + 1) * (100 / (nodeDefinition.outputs.length + 1))
+                }%`,
+                transform: "translateX(-50%)",
+              }}
+              className="w-3 h-3"
+            />
+          );
+        })
       ) : (
         <Handle
           type="source"

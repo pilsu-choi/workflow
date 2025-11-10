@@ -74,12 +74,6 @@ export interface WorkflowStatus {
   nodes: Record<string, NodeStatus>;
 }
 
-export interface NodeType {
-  type: string;
-  name: string;
-  description: string;
-}
-
 // React Flow types
 export interface FlowNode {
   id: string;
@@ -91,8 +85,8 @@ export interface FlowNode {
     config?: Record<string, any>;
     originalId?: number;
     category?: string;
-    inputs?: string[];
-    outputs?: string[];
+    inputs?: NodeInputOutput[];
+    outputs?: NodeInputOutput[];
   };
 }
 
@@ -105,85 +99,82 @@ export interface FlowEdge {
   originalId?: number;
 }
 
-// Node type definitions
-export interface NodeTypeDefinition {
-  type: string;
-  label: string;
+/**
+ * Node Input/Output port types
+ */
+export const NodeInputOutputType = {
+  TEXT: "TEXT",
+  JSON: "JSON",
+  FILE: "FILE",
+  NUMBER: "NUMBER",
+  BOOLEAN: "BOOLEAN",
+  ARRAY: "ARRAY",
+  OBJECT: "OBJECT",
+};
+
+/**
+ * Node Input/Output port definition
+ */
+export interface NodeInputOutput {
+  /** Port ID (8-character UUID) */
+  id: string;
+  /** Field name corresponding to the input/output */
+  name: string;
+  /** Input/Output type */
+  type: keyof typeof NodeInputOutputType;
+  /** Whether this field is required */
+  required: boolean;
+  /** Default or current value */
+  value?: any;
+  /** Description of the field */
   description: string;
-  category: string;
-  icon: string;
-  color: string;
-  inputs: string[];
-  outputs: string[];
-  configSchema?: Record<string, any>;
 }
 
-// Node categories
+/**
+ * Node type categories
+ */
 export const NODE_CATEGORIES = {
-  AI_ML: "ai_ml",
-  DATA_PROCESSING: "data_processing",
-  LOGIC: "logic",
-  INPUT_OUTPUT: "input_output",
-} as const;
+  AI_ML: "AI_ML",
+  DATA_PROCESSING: "DATA_PROCESSING",
+  LOGIC: "LOGIC",
+  INPUT_OUTPUT: "INPUT_OUTPUT",
+};
 
-// Node type definitions
-export const NODE_TYPES: NodeTypeDefinition[] = [
-  // AI/ML
-  {
-    type: "LLM_NODE",
-    label: "Language Model",
-    description: "AI language model with configurable provider and prompts",
-    category: NODE_CATEGORIES.AI_ML,
-    icon: "SmartToy",
-    color: "#9c27b0",
-    inputs: ["input"],
-    outputs: ["response"],
-  },
+/**
+ * Node type definition
+ */
+export interface NodeTypeDefinition {
+  /** Node type identifier */
+  type: keyof typeof NodeType;
+  /** Display label */
+  label: string;
+  /** Description of the node */
+  description: string;
+  /** Category of the node */
+  category: keyof typeof NODE_CATEGORIES;
+  /** Icon name (e.g., Material UI icon) */
+  icon: string;
+  /** Color in hex format */
+  color: string;
+  /** Input port definitions */
+  inputs: NodeInputOutput[];
+  /** Output port definitions */
+  outputs: NodeInputOutput[];
+}
 
-  // Data Processing
-  {
-    type: "PARSER_NODE",
-    label: "Parser",
-    description: "Parse and transform JSON data with various operations",
-    category: NODE_CATEGORIES.DATA_PROCESSING,
-    icon: "Code",
-    color: "#2196f3",
-    inputs: ["data"],
-    outputs: ["output"],
-  },
+/**
+ * Available node types
+ */
+export const NodeType = {
+  // Input/Output nodes
+  CHAT_INPUT: "CHAT_INPUT",
+  CHAT_OUTPUT: "CHAT_OUTPUT",
 
-  // Logic
-  {
-    type: "CONDITION",
-    label: "If/Else",
-    description: "Conditional logic with comparison operators",
-    category: NODE_CATEGORIES.LOGIC,
-    icon: "Condition",
-    color: "#e65100",
-    inputs: ["value"],
-    outputs: ["true", "false"],
-  },
+  // Processing nodes
+  LLM_NODE: "LLM_NODE",
+  CONDITION: "CONDITION",
+  LOOP: "LOOP",
 
-  // Input/Output
-  {
-    type: "CHAT_INPUT",
-    label: "CHAT INPUT",
-    description: "Input node for chat-based workflows",
-    category: NODE_CATEGORIES.INPUT_OUTPUT,
-    icon: "Input",
-    color: "#ff5722",
-    inputs: [],
-    outputs: ["output"],
-  },
-  {
-    type: "CHAT_OUTPUT",
-    label: "CHAT OUTPUT",
-    description:
-      "Output node for chat-based workflows with configurable formatting",
-    category: NODE_CATEGORIES.INPUT_OUTPUT,
-    icon: "Reply",
-    color: "#4caf50",
-    inputs: ["input"],
-    outputs: ["output"],
-  },
-];
+  // Utility nodes
+  PARSER_NODE: "PARSER_NODE",
+};

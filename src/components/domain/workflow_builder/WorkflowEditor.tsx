@@ -25,7 +25,7 @@ import {
   type Graph,
   type Vertex,
   type Edge as WorkflowEdge,
-  NODE_TYPES,
+  type NodeTypeDefinition,
 } from "../../../types/workflow";
 import { workflowApi } from "../../../services/workflow/api";
 import CustomNode from "./CustomNode";
@@ -37,7 +37,7 @@ const nodeTypes: NodeTypes = {
 };
 
 const WorkflowEditor: React.FC<{ workflowId: number }> = ({ workflowId }) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges] = useEdgesState([]);
   const [workflow, setWorkflow] = useState<Graph | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -51,7 +51,25 @@ const WorkflowEditor: React.FC<{ workflowId: number }> = ({ workflowId }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const nextTempId = useRef(-1); // For temporary IDs before saving
   const [saving, setSaving] = useState(false);
+  const [NODE_TYPES, setNODE_TYPES] = useState<NodeTypeDefinition[]>([]);
+
+  // Load node types first
+  useEffect(() => {
+    const loadNodeTypes = async () => {
+      try {
+        const nodeTypesResponse = await workflowApi.getNodeTypes();
+        setNODE_TYPES(nodeTypesResponse.data);
+      } catch (error) {
+        console.error("Failed to load node types:", error);
+      }
+    };
+    loadNodeTypes();
+  }, []);
+
   const loadWorkflowData = useCallback(async () => {
+    // Wait for NODE_TYPES to be loaded
+    if (NODE_TYPES.length === 0) return;
+
     try {
       setLoading(true);
       const response = await workflowApi.getWorkflow(workflowId);
@@ -67,7 +85,9 @@ const WorkflowEditor: React.FC<{ workflowId: number }> = ({ workflowId }) => {
 
       // Convert vertices to React Flow nodes
       const flowNodes: FlowNode[] = loadedVertices.map((vertex) => {
-        const nodeDefinition = NODE_TYPES.find((n) => n.type === vertex.type);
+        const nodeDefinition = NODE_TYPES.find(
+          (n: NodeTypeDefinition) => n.type === vertex.type
+        );
         const position = vertex.properties?.position || { x: 100, y: 100 };
 
         return {
@@ -92,11 +112,11 @@ const WorkflowEditor: React.FC<{ workflowId: number }> = ({ workflowId }) => {
         source: edge.source_id.toString(),
         target: edge.target_id.toString(),
         sourceHandle:
-          edge.source_properties?.name ||
+          edge.source_properties?.source_id ||
           edge.source_properties?.handle ||
           undefined,
         targetHandle:
-          edge.target_properties?.name ||
+          edge.target_properties?.target_id ||
           edge.target_properties?.handle ||
           undefined,
         originalId: edge.id,
@@ -109,12 +129,14 @@ const WorkflowEditor: React.FC<{ workflowId: number }> = ({ workflowId }) => {
     } finally {
       setLoading(false);
     }
-  }, [workflowId]);
+  }, [workflowId, NODE_TYPES]);
 
-  // Load workflow data
+  // Load workflow data after NODE_TYPES is loaded
   useEffect(() => {
-    loadWorkflowData();
-  }, [workflowId, loadWorkflowData]);
+    if (NODE_TYPES.length > 0) {
+      loadWorkflowData();
+    }
+  }, [workflowId, loadWorkflowData, NODE_TYPES]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -166,8 +188,8 @@ const WorkflowEditor: React.FC<{ workflowId: number }> = ({ workflowId }) => {
 
   const handleNodeUpdate = useCallback((nodeId: string, updates: any) => {
     // Update locally (will be saved when workflow is saved)
-    setNodes((nds) =>
-      nds.map((node) => {
+    setNodes((nds: Node[]) =>
+      nds.map((node: Node) => {
         const matches = String(node.id) === String(nodeId);
 
         if (matches) {
@@ -473,7 +495,7 @@ const WorkflowEditor: React.FC<{ workflowId: number }> = ({ workflowId }) => {
   return (
     <ReactFlowProvider>
       <Box sx={{ display: "flex", height: "100vh" }}>
-        <NodePalette onAddNode={handleAddNode} />
+        <NodePalette onAddNode={handleAddNode} nodeTypes={NODE_TYPES} />
         <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <WorkflowToolbar
             workflow={workflow}

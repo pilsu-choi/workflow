@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Paper,
   Typography,
@@ -40,10 +40,15 @@ import {
   Loop as LoopIcon,
   Transform as TransformIcon,
 } from "@mui/icons-material";
-import { NODE_TYPES, NODE_CATEGORIES } from "../../../types/workflow";
+import {
+  NODE_CATEGORIES,
+  type NodeTypeDefinition,
+} from "../../../types/workflow";
+import { workflowApi } from "../../../services/workflow/api";
 
 interface NodePaletteProps {
   onAddNode: (nodeType: string) => void;
+  nodeTypes?: NodeTypeDefinition[];
 }
 
 // Icon mapping
@@ -84,7 +89,10 @@ const categoryLabels: { [key: string]: string } = {
   [NODE_CATEGORIES.INPUT_OUTPUT]: "Input/Output",
 };
 
-const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
+const NodePalette: React.FC<NodePaletteProps> = ({
+  onAddNode,
+  nodeTypes = [],
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedCategories, setExpandedCategories] = useState<string[]>([
     NODE_CATEGORIES.AI_ML,
@@ -92,7 +100,20 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
     NODE_CATEGORIES.LOGIC,
     NODE_CATEGORIES.INPUT_OUTPUT,
   ]);
+  const [NODE_TYPES, setNODE_TYPES] = useState<NodeTypeDefinition[]>([]);
 
+  // Use provided nodeTypes or fetch if not provided
+  useEffect(() => {
+    if (nodeTypes.length > 0) {
+      setNODE_TYPES(nodeTypes);
+    } else {
+      const fetchNodeTypes = async () => {
+        const nodeTypesResponse = await workflowApi.getNodeTypes();
+        setNODE_TYPES(nodeTypesResponse.data);
+      };
+      fetchNodeTypes();
+    }
+  }, [nodeTypes]);
   const handleDragStart = (event: React.DragEvent, nodeType: string) => {
     console.log("Drag started for node type:", nodeType);
     event.dataTransfer.setData("application/reactflow", nodeType);
@@ -108,7 +129,7 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
       acc[node.category].push(node);
       return acc;
     }, {} as { [key: string]: typeof NODE_TYPES });
-  }, []); // Empty deps - only compute once since NODE_TYPES is static
+  }, [NODE_TYPES]); // Recompute when NODE_TYPES changes
 
   // Filter nodes based on search term - memoized to only recompute when search changes
   const filteredNodesByCategory = useMemo(() => {

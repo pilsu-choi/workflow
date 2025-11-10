@@ -3,8 +3,9 @@ import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
 import { Box, Typography, Chip } from "@mui/material";
 import { Reply as ChatOutputIcon } from "@mui/icons-material";
+import type { FlowNode, NodeInputOutput } from "../../../../types";
 
-const ChatOutputNode: React.FC<NodeProps> = (props) => {
+const ChatOutputNode: React.FC<NodeProps<FlowNode>> = (props) => {
   const { data, selected } = props;
   const color = "#4caf50";
 
@@ -25,17 +26,44 @@ const ChatOutputNode: React.FC<NodeProps> = (props) => {
       }}
     >
       {/* Input handle */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        id="input"
-        style={{
-          backgroundColor: color,
-          border: `2px solid white`,
-        }}
-        className="w-4 h-4"
-      />
+      {data.inputs && data.inputs.length > 0 ? (
+        data.inputs.map((input: NodeInputOutput, index: number) => {
+          const handleId =
+            typeof input === "string"
+              ? input
+              : String(input?.id || input?.name || `input-${index}`);
 
+          return (
+            <Handle
+              key={`input-${index}-${handleId}`}
+              type="target"
+              position={Position.Top}
+              id={handleId}
+              style={{
+                left: `${
+                  (index + 1) *
+                  (100 / ((data.inputs as NodeInputOutput[]).length + 1))
+                }%`,
+                transform: "translateX(-50%)",
+                backgroundColor: color,
+                border: `2px solid white`,
+              }}
+              className="w-4 h-4"
+            />
+          );
+        })
+      ) : (
+        <Handle
+          type="target"
+          id="input"
+          position={Position.Top}
+          style={{
+            backgroundColor: color,
+            border: `2px solid white`,
+          }}
+          className="w-4 h-4"
+        />
+      )}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
         <Box sx={{ color, display: "flex", alignItems: "center" }}>
           <ChatOutputIcon />
@@ -84,16 +112,44 @@ const ChatOutputNode: React.FC<NodeProps> = (props) => {
       )}
 
       {/* Output handle */}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="output"
-        style={{
-          backgroundColor: color,
-          border: `2px solid white`,
-        }}
-        className="w-4 h-4"
-      />
+      {data.outputs && data.outputs.length > 0 ? (
+        data.outputs.map((output: NodeInputOutput, index: number) => {
+          const handleId =
+            typeof output === "string"
+              ? output
+              : String(output?.id || output?.name || `output-${index}`);
+
+          return (
+            <Handle
+              key={`output-${index}-${handleId}`}
+              type="source"
+              id={handleId}
+              position={Position.Bottom}
+              style={{
+                left: `${
+                  (index + 1) *
+                  (100 / ((data.outputs as NodeInputOutput[]).length + 1))
+                }%`,
+                transform: "translateX(-50%)",
+                backgroundColor: color,
+                border: `2px solid white`,
+              }}
+              className="w-4 h-4"
+            />
+          );
+        })
+      ) : (
+        <Handle
+          type="source"
+          id="output"
+          position={Position.Bottom}
+          style={{
+            backgroundColor: color,
+            border: `2px solid white`,
+          }}
+          className="w-4 h-4"
+        />
+      )}
     </Box>
   );
 };

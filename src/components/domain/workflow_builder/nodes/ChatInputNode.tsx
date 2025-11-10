@@ -3,8 +3,9 @@ import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
 import { Box, Typography, Chip } from "@mui/material";
 import { Input as ChatInputIcon } from "@mui/icons-material";
+import type { FlowNode, NodeInputOutput } from "../../../../types";
 
-const ChatInputNode: React.FC<NodeProps> = (props) => {
+const ChatInputNode: React.FC<NodeProps<FlowNode>> = (props) => {
   const { data, selected } = props;
   const color = "#ff5722";
 
@@ -54,16 +55,44 @@ const ChatInputNode: React.FC<NodeProps> = (props) => {
       </Box>
 
       {/* Output handle */}
-      <Handle
-        type="source"
-        id={data.outputs?.[0] || "output"}
-        position={Position.Bottom}
-        style={{
-          backgroundColor: color,
-          border: `2px solid white`,
-        }}
-        className="w-4 h-4"
-      />
+      {data.outputs && data.outputs.length > 0 ? (
+        data.outputs.map((output: NodeInputOutput, index: number) => {
+          const handleId =
+            typeof output === "string"
+              ? output
+              : String(output?.id || output?.name || `output-${index}`);
+
+          return (
+            <Handle
+              key={`output-${index}-${handleId}`}
+              type="source"
+              id={handleId}
+              position={Position.Bottom}
+              style={{
+                left: `${
+                  (index + 1) *
+                  (100 / ((data.outputs as NodeInputOutput[]).length + 1))
+                }%`,
+                transform: "translateX(-50%)",
+                backgroundColor: color,
+                border: `2px solid white`,
+              }}
+              className="w-4 h-4"
+            />
+          );
+        })
+      ) : (
+        <Handle
+          type="source"
+          id="output"
+          position={Position.Bottom}
+          style={{
+            backgroundColor: color,
+            border: `2px solid white`,
+          }}
+          className="w-4 h-4"
+        />
+      )}
     </Box>
   );
 };
