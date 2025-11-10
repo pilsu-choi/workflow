@@ -85,6 +85,7 @@ class WorkflowExecuteRequest(BaseModel):
 
 
 class WorkflowExecuteResponse(BaseModel):
+    execution_id: str
     model_config = ConfigDict(
         json_schema_extra={"example": examples.EXAMPLE_WORKFLOW_EXECUTE_RESPONSE}  # type: ignore
     )
