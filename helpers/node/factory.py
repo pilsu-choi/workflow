@@ -2,18 +2,8 @@ from typing import Any, Dict
 
 from helpers.node.node_base import BaseNode
 from helpers.node.node_templates.condition import ConditionNode
-from helpers.node.node_templates.function import FunctionNode
 from helpers.node.node_templates.llm import LLMNode
-from helpers.node.node_templates.text_input import TextInputNode
-from helpers.node.node_templates.utility_nodes import (
-    ChatInputNode,
-    DelayNode,
-    JSONOutputNode,
-    JSONParserNode,
-    SplitNode,
-    TextOutputNode,
-    WebhookNode,
-)
+from helpers.node.node_templates.utility_nodes import ChatInputNode, JSONParserNode
 from helpers.node.node_type import NodeType
 
 
@@ -21,17 +11,9 @@ class NodeFactory:
     """노드 생성 팩토리"""
 
     _node_classes: dict[NodeType, type[BaseNode]] = {
-        NodeType.TEXT_INPUT: TextInputNode,
-        NodeType.TEXT_OUTPUT: TextOutputNode,
-        NodeType.JSON_OUTPUT: JSONOutputNode,
         NodeType.LLM_NODE: LLMNode,
         NodeType.CONDITION: ConditionNode,
-        NodeType.FUNCTION: FunctionNode,
-        NodeType.DELAY: DelayNode,
-        NodeType.WEBHOOK: WebhookNode,
-        # NodeType.MERGE: MergeNode,
-        NodeType.SPLIT: SplitNode,
-        NodeType.PARSER_NODE: JSONParserNode,  # PasrerNode,
+        NodeType.PARSER_NODE: JSONParserNode,
         NodeType.CHAT_INPUT: ChatInputNode,
     }
 
