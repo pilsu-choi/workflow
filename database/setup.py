@@ -43,6 +43,9 @@ async def validate():
 
 
 async def create_tables():
-    async with AsyncEngine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
-    logger.info("✅ Tables created successfully")
+    # 테이블 생성 여부 확인 후 없으면 생성
+    if not SQLModel.metadata.tables:
+        async with AsyncEngine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+        logger.info("✅ Tables created successfully")
+        return
