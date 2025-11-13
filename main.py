@@ -11,6 +11,7 @@ from routers.v1.graph.graph_router import router as graph_router
 from routers.v1.graph.node_pannel_router import router as node_panel_router
 from routers.v1.graph.workflow_router import router as workflow_router
 from routers.v1.log.log_router import router as log_router
+from routers.v1.websocket.websocket_router import router as websocket_router
 
 
 @asynccontextmanager
@@ -88,6 +89,9 @@ app.include_router(graph_router, prefix="/api")
 
 # 노드 패널 라우터 추가
 app.include_router(node_panel_router, prefix="/api")
+
+# WebSocket 라우터 추가
+app.include_router(websocket_router, prefix="/api")
 if __name__ == "__main__":
 
     db_validate = asyncio.run(validate())
