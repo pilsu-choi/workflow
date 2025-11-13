@@ -25,5 +25,11 @@ class NodeStatusResponse(BaseModel):
     completed_at: str | None = None
 
 
-class NodeTypeResponse(BaseModel):
-    category: Dict[NodeTypeCategory, List[NodeTypeDefinition]]
+class NodePanelComponent(BaseModel):
+    category: NodeTypeCategory
+    nodes: List[NodeTypeDefinition]
+    count: int
+
+
+class NodePanelResponse(BaseModel):
+    components: List[NodePanelComponent]
