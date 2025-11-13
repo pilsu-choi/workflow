@@ -29,6 +29,7 @@ class BaseNode(ABC):
     outputs: List[NodeInputOutput] = []
     type: NodeType
 
+    # TODO: properties -> 노드별 config 정보 필드 정의 필요
     def __init__(self, node_id: str, properties: Dict[str, Any]):
         self.node_id = node_id
         self.properties = properties
