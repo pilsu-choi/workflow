@@ -5,11 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from database.graph.edge import Edge
 from database.graph.graph import Graph
 from database.graph.vertex import Vertex
-from dto.workflow.node_dto import NodeStatusResponse, NodeTypeResponse
+from dto.graph.edge_dto import EdgeDetailResponse
+from dto.graph.vertex_dto import VertexDetailResponse
+from dto.workflow.node_dto import NodeStatusResponse
 from dto.workflow.workflow_dto import (
-    EdgeDetailResponse,
     GraphDetailResponse,
-    VertexDetailResponse,
     WorkflowCreateRequest,
     WorkflowCreateResponse,
     WorkflowDeleteResponse,
@@ -21,7 +21,6 @@ from dto.workflow.workflow_dto import (
     WorkflowUpdateRequest,
     WorkflowUpdateResponse,
 )
-from helpers.node.node_templates.node_template_types import NODE_TYPES
 from helpers.utils.dependencies import (
     get_graph_service,
     get_workflow_execution_service,
@@ -207,15 +206,6 @@ async def delete_workflow(
     try:
         result = await persistence_service.delete(graph_id)
         return WorkflowDeleteResponse(**result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/node-types/", response_model=NodeTypeResponse)
-async def get_node_types():
-    """사용 가능한 노드 타입들 조회"""
-    try:
-        return NodeTypeResponse(category=NODE_TYPES)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
