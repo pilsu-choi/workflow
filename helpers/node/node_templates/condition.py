@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 from helpers.node.node_base import BaseNode, NodeInputOutput, NodeInputOutputType
+from helpers.node.node_type import NodeType
 from setting.logger import get_logger
 
 logger = get_logger(__name__)
@@ -9,33 +10,25 @@ logger = get_logger(__name__)
 class ConditionNode(BaseNode):
     """조건문 노드"""
 
+    inputs = [
+        NodeInputOutput(
+            name="condition",
+            type=NodeInputOutputType.TEXT,
+            description="조건식",
+            required=False,  # properties에서 가져올 수 있으므로 optional
+        ),
+    ]
+    outputs = [
+        NodeInputOutput(
+            name="true",
+            type=NodeInputOutputType.BOOLEAN,
+            description="조건이 참일 때",
+        ),
+    ]
+    type = NodeType.CONDITION
+
     def __init__(self, node_id: str, properties: Dict[str, Any]):
         super().__init__(node_id, properties)
-        self.inputs = [
-            NodeInputOutput(
-                name="condition",
-                type=NodeInputOutputType.TEXT,
-                description="조건식",
-                required=False,  # properties에서 가져올 수 있으므로 optional
-            ),
-            NodeInputOutput(
-                name="value",
-                type=NodeInputOutputType.TEXT,
-                description="비교할 값",
-            ),
-        ]
-        self.outputs = [
-            NodeInputOutput(
-                name="true",
-                type=NodeInputOutputType.BOOLEAN,
-                description="조건이 참일 때",
-            ),
-            NodeInputOutput(
-                name="false",
-                type=NodeInputOutputType.BOOLEAN,
-                description="조건이 거짓일 때",
-            ),
-        ]
 
     async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         self.params = inputs
