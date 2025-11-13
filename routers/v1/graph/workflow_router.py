@@ -297,6 +297,3 @@ async def update_workflow(
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-
-# TODO: websocket 연결 엔드포인트 구성
