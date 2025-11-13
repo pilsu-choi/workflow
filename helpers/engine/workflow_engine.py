@@ -1,7 +1,7 @@
 import uuid
 from collections import defaultdict, deque
 from datetime import datetime
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 from database.graph.edge import Edge
 from database.graph.vertex import Vertex
@@ -9,6 +9,7 @@ from dto.workflow.workflow_dto import WorkflowExecutionResult
 from helpers.node.factory import NodeFactory
 from helpers.node.node_base import BaseNode
 from helpers.node.node_type import NodeType
+from helpers.websockets import WebSocketHandler, ws_manager
 from setting.logger import get_logger
 
 logger = get_logger(__name__)
@@ -17,7 +18,9 @@ logger = get_logger(__name__)
 class WorkflowEngine:
     """워크플로우 실행 엔진"""
 
-    def __init__(self):
+    def __init__(
+        self, workflow_id: Optional[str] = None, enable_websocket: bool = True
+    ):
         self.node_instances: Dict[str, BaseNode] = {}
         self.execution_context: Dict[str, Any] = (
             {}
@@ -27,6 +30,9 @@ class WorkflowEngine:
         self.is_first_execution: bool = True
         self.initial_inputs: Dict[str, Any] = {}
         self.logs: List[str] = []  # 실행 중 로그 메시지 수집
+        self.workflow_id = workflow_id  # WebSocket 메시지 전송용
+        self.enable_websocket = enable_websocket  # WebSocket 활성화 여부
+        self.execution_id: Optional[str] = None  # 현재 실행 ID
 
     def _add_log(self, message: str):
         """로그 메시지 추가"""
@@ -123,6 +129,9 @@ class WorkflowEngine:
             # 노드 상태를 running으로 설정
             node.set_status("running")
 
+            # WebSocket으로 노드 실행 시작 알림
+            await self._send_node_status(node_id, "running")
+
             # 입력 데이터 수집
             inputs = self._collect_node_inputs(node_id)
             logger.debug(f"노드 {node_id} 입력 데이터: {inputs}")
@@ -179,6 +188,13 @@ class WorkflowEngine:
                 self.is_first_execution = False
 
             self._add_log(f"노드 {node_id} 실행 완료")
+
+            # WebSocket으로 노드 실행 완료 알림
+            await self._send_node_status(node_id, "completed", result=result)
+
+            # 연결된 다음 노드들에게 edge flow 알림
+            await self._send_edge_flows(node_id)
+
             return result
 
         except Exception as e:
@@ -186,6 +202,10 @@ class WorkflowEngine:
             self._add_log(error_msg)
             logger.error(error_msg, exc_info=True)
             node.set_error(error_msg)
+
+            # WebSocket으로 노드 실행 실패 알림
+            await self._send_node_status(node_id, "error", error=error_msg)
+
             raise
 
     async def start(
@@ -195,6 +215,7 @@ class WorkflowEngine:
         result = WorkflowExecutionResult()
         result.start_time = datetime.now()
         result.execution_id = str(uuid.uuid4())  # 실행 ID 생성
+        self.execution_id = result.execution_id  # 인스턴스 변수에 저장
 
         try:
             # 초기 입력 저장
@@ -208,9 +229,15 @@ class WorkflowEngine:
                 f"워크플로우 실행 시작 (execution_id: {result.execution_id}): {len(execution_order)}개 노드"
             )
 
+            # WebSocket으로 워크플로우 시작 알림
+            await self._send_workflow_start(result.execution_id, execution_order)
+
             # 순차적으로 노드 실행
-            for node_id in execution_order:
+            for idx, node_id in enumerate(execution_order):
                 try:
+                    # WebSocket으로 진행률 전송
+                    await self._send_progress(idx + 1, len(execution_order), node_id)
+
                     # TODO: 병렬 처리 노드 고려 필요. 병렬 처리 노드를 multi processing으로 할 것인지, threading으로 할 것인지, asyncio로 할 것인지 고려 필요.
                     node_result = await self._execute_node(node_id)
                     result.node_results[node_id] = node_result
@@ -233,6 +260,14 @@ class WorkflowEngine:
                 logger.error(
                     f"워크플로우 실행 실패: {len(result.errors)}개 에러", exc_info=True
                 )
+
+            # WebSocket으로 워크플로우 완료 알림
+            await self._send_workflow_complete(
+                result.execution_id,
+                result.success,
+                result.execution_time,
+                result.errors,
+            )
 
         except Exception as e:
             result.end_time = datetime.now()
@@ -285,8 +320,102 @@ class WorkflowEngine:
         self.initial_inputs = {}
         self.is_first_execution = True
         self.logs.clear()  # 로그도 초기화
+        self.execution_id = None  # 실행 ID 초기화
         for node in self.node_instances.values():
             node.status = "pending"
             node.result = None
             node.error = None
         logger.info("워크플로우 상태 초기화 완료")
+
+    # ===== WebSocket 관련 메서드 =====
+
+    async def _send_workflow_start(self, execution_id: str, execution_order: List[str]):
+        """워크플로우 시작 메시지 전송"""
+        if not self.enable_websocket or not self.workflow_id:
+            return
+
+        if ws_manager.has_connections(self.workflow_id):
+            message = WebSocketHandler.create_workflow_start_message(
+                workflow_id=self.workflow_id,
+                execution_id=execution_id,
+                execution_order=execution_order,
+            )
+            await ws_manager.broadcast_to_workflow(message, self.workflow_id)
+
+    async def _send_workflow_complete(
+        self,
+        execution_id: str,
+        success: bool,
+        execution_time: float,
+        errors: List[str],
+    ):
+        """워크플로우 완료 메시지 전송"""
+        if not self.enable_websocket or not self.workflow_id:
+            return
+
+        if ws_manager.has_connections(self.workflow_id):
+            message = WebSocketHandler.create_workflow_complete_message(
+                workflow_id=self.workflow_id,
+                execution_id=execution_id,
+                success=success,
+                execution_time=execution_time,
+                errors=errors,
+            )
+            await ws_manager.broadcast_to_workflow(message, self.workflow_id)
+
+    async def _send_node_status(
+        self,
+        node_id: str,
+        status: str,
+        result: Optional[Dict[str, Any]] = None,
+        error: Optional[str] = None,
+    ):
+        """노드 상태 변경 메시지 전송"""
+        if not self.enable_websocket or not self.workflow_id or not self.execution_id:
+            return
+
+        if ws_manager.has_connections(self.workflow_id):
+            message = WebSocketHandler.create_node_status_message(
+                workflow_id=self.workflow_id,
+                execution_id=self.execution_id,
+                node_id=node_id,
+                status=status,
+                result=result,
+                error=error,
+            )
+            await ws_manager.broadcast_to_workflow(message, self.workflow_id)
+
+    async def _send_edge_flows(self, source_node_id: str):
+        """현재 노드에서 다음 노드로의 데이터 흐름 메시지 전송"""
+        if not self.enable_websocket or not self.workflow_id or not self.execution_id:
+            return
+
+        if not ws_manager.has_connections(self.workflow_id):
+            return
+
+        # 현재 노드의 다음 노드들에게 edge flow 메시지 전송
+        for target_node_id in self.reverse_dependencies.get(source_node_id, []):
+            message = WebSocketHandler.create_edge_flow_message(
+                workflow_id=self.workflow_id,
+                execution_id=self.execution_id,
+                source_node_id=source_node_id,
+                target_node_id=target_node_id,
+            )
+            await ws_manager.broadcast_to_workflow(message, self.workflow_id)
+
+    async def _send_progress(
+        self, current_step: int, total_steps: int, current_node_id: str
+    ):
+        """진행률 메시지 전송"""
+        if not self.enable_websocket or not self.workflow_id or not self.execution_id:
+            return
+
+        if ws_manager.has_connections(self.workflow_id):
+            message = WebSocketHandler.create_progress_message(
+                workflow_id=self.workflow_id,
+                execution_id=self.execution_id,
+                current_step=current_step,
+                total_steps=total_steps,
+                current_node_id=current_node_id,
+            )
+            await ws_manager.broadcast_to_workflow(message, self.workflow_id)
