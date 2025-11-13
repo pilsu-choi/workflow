@@ -211,6 +211,7 @@ class WorkflowEngine:
             # 순차적으로 노드 실행
             for node_id in execution_order:
                 try:
+                    # TODO: 병렬 처리 노드 고려 필요. 병렬 처리 노드를 multi processing으로 할 것인지, threading으로 할 것인지, asyncio로 할 것인지 고려 필요.
                     node_result = await self._execute_node(node_id)
                     result.node_results[node_id] = node_result
                 except Exception as e:
