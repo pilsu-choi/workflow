@@ -3,7 +3,11 @@ from typing import Any, Dict
 from helpers.node.node_base import BaseNode
 from helpers.node.node_templates.condition import ConditionNode
 from helpers.node.node_templates.llm import LLMNode
-from helpers.node.node_templates.utility_nodes import ChatInputNode, JSONParserNode
+from helpers.node.node_templates.utility_nodes import (
+    ChatInputNode,
+    ChatOutputNode,
+    JSONParserNode,
+)
 from helpers.node.node_type import NodeType
 
 
@@ -15,6 +19,7 @@ class NodeFactory:
         NodeType.CONDITION: ConditionNode,
         NodeType.PARSER_NODE: JSONParserNode,
         NodeType.CHAT_INPUT: ChatInputNode,
+        NodeType.CHAT_OUTPUT: ChatOutputNode,
     }
 
     @classmethod
