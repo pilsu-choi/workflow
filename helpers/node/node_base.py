@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Literal
 
 from pydantic import BaseModel, Field
 
+from helpers.node.node_templates.node_field_types import NodeFieldsDefinition
 from helpers.node.node_type import NodeInputOutputType, NodeType
 
 if TYPE_CHECKING:
@@ -28,11 +29,12 @@ class BaseNode(ABC):
     inputs: List[NodeInputOutput] = []
     outputs: List[NodeInputOutput] = []
     type: NodeType
+    properties: BaseModel
 
     # TODO: properties -> 노드별 config 정보 필드 정의 필요
     def __init__(self, node_id: str, properties: Dict[str, Any]):
         self.node_id = node_id
-        self.properties = properties
+        self.properties = self.validate_properties(properties)
         self.status: str = "pending"  # pending, running, completed, failed
         self.error: str | None = None
         self.result: Any = None  # 노드 실행 결과
@@ -58,20 +60,37 @@ class BaseNode(ABC):
                 return False
         return True
 
+    @abstractmethod
+    def validate_properties(self, properties: Dict[str, Any]) -> BaseModel:
+        """
+        properties를 검증하고 BaseModel로 반환
+        """
+        pass
+
     @classmethod
-    def get_input_schema(self) -> List[NodeInputOutput]:
+    def get_input_schema(cls) -> List[NodeInputOutput]:
         """입력 스키마 반환"""
-        return self.inputs
+        return cls.inputs
 
     @classmethod
-    def get_output_schema(self) -> List[NodeInputOutput]:
+    def get_output_schema(cls) -> List[NodeInputOutput]:
         """출력 스키마 반환"""
-        return self.outputs
+        return cls.outputs
+
+    @abstractmethod
+    def get_properties(cls) -> BaseModel:
+        """Properties용 BaseModel 클래스 자체를 반환"""
+        pass
+
+    @abstractmethod
+    def get_properties_schema(cls) -> NodeFieldsDefinition:
+        """Properties의 NodeFieldsDefinition을 반환"""
+        pass
 
     @classmethod
-    def get_type(self) -> NodeType:
+    def get_type(cls) -> NodeType:
         """노드 타입 반환"""
-        return self.type
+        return cls.type
 
     def set_status(self, status: str):
         """상태 설정"""
