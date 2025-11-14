@@ -1,10 +1,22 @@
 from typing import Any, Dict
 
+from pydantic import BaseModel
+
 from helpers.node.node_base import BaseNode, NodeInputOutput, NodeInputOutputType
+from helpers.node.node_templates.node_field_types import (
+    FieldOption,
+    NodeField,
+    NodeFieldsDefinition,
+)
 from helpers.node.node_type import NodeType
 from setting.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+class ConditionProperties(BaseModel):
+    operator: str
+    compare_value: str
 
 
 class ConditionNode(BaseNode):
@@ -26,6 +38,7 @@ class ConditionNode(BaseNode):
         ),
     ]
     type = NodeType.CONDITION
+    properties: ConditionProperties
 
     def __init__(self, node_id: str, properties: Dict[str, Any]):
         super().__init__(node_id, properties)
@@ -33,13 +46,11 @@ class ConditionNode(BaseNode):
     async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         self.params = inputs
         # operator는 properties에서, value는 inputs에서 가져오기
-        operator = self.properties.get("config", {}).get(
-            "operator", ""
-        )  # equal, not_equal, greater_than, less_than, greater_equal, less_equal
-        compare_value = self.properties.get("config", {}).get("compare_value", "")
+        operator = self.properties.operator
+        compare_value = self.properties.compare_value
 
         # inputs에서 실제 비교할 값 가져오기
-        input_value = inputs.get("value", "")
+        input_value = inputs.get("condition", "")
 
         # 간단한 조건 평가
         try:
@@ -82,3 +93,47 @@ class ConditionNode(BaseNode):
         현재는 부모 클래스의 default method 이용하여 inputs 검증 진행. 필요시 override.
         """
         return super().validate_inputs(inputs)
+
+    def validate_properties(self, properties: Dict[str, Any]) -> BaseModel:
+        """
+        properties를 검증하고 BaseModel로 반환
+        """
+        return ConditionProperties.model_validate(properties)
+
+    @classmethod
+    def get_properties(cls) -> BaseModel:
+        return cls.properties
+
+    @classmethod
+    def get_properties_schema(cls) -> NodeFieldsDefinition:
+        return NodeFieldsDefinition(
+            fields=[
+                NodeField(
+                    name="input_field",
+                    type="text",
+                    required=True,
+                    placeholder="Field to compare (e.g., user.age, data.status)",
+                ),
+                NodeField(
+                    name="operator",
+                    type="select",
+                    required=True,
+                    options=[
+                        FieldOption(value="equal", label="Equal"),
+                        FieldOption(value="not_equal", label="Not Equal"),
+                        FieldOption(value="less_than", label="Less Than"),
+                        FieldOption(value="greater_than", label="Greater Than"),
+                        FieldOption(value="less_equal", label="Less than or equal"),
+                        FieldOption(
+                            value="greater_equal", label="Greater than or equal"
+                        ),
+                    ],
+                ),
+                NodeField(
+                    name="compare_value",
+                    type="text",
+                    required=True,
+                    placeholder="Value to compare against",
+                ),
+            ]
+        )
